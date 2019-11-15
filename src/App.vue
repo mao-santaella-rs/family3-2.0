@@ -8,5 +8,14 @@
 
 </template>
 
+<script>
+export default {
+  name: 'App',
+  beforeCreate () {
+    this.$store.dispatch('getData')
+  }
+}
+</script>
+
 <style lang="sass">
 </style>

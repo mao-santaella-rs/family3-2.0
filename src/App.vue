@@ -1,21 +1,33 @@
 <template lang="pug">
-#app
-  #nav
-    router-link(to='/') Home
-    |  | 
-    router-link(to='/about') About
-  router-view
+
+  #app
+    vHeader
+    router-view
+    vFamilyTree
 
 </template>
 
 <script>
+import vHeader from './components/Header.vue'
+import vFamilyTree from './components/FamilyTree.vue'
 export default {
-  name: 'App',
-  beforeCreate () {
+  name: 'app',
+  components: {
+    vFamilyTree, vHeader
+  },
+  data () {
+    return {
+    }
+  },
+  created () {
     this.$store.dispatch('getData')
+    this.$store.dispatch('sessionV')
   }
 }
 </script>
 
 <style lang="sass">
+@import "./styles/main.sass"
+html
+  background: url("./assets/bg.png")
 </style>

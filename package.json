@@ -9,6 +9,8 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "bootstrap": "^4.3.1",
+    "bourbon": "^6.0.0",
     "core-js": "^3.3.2",
     "firebase": "^7.4.0",
     "vue": "^2.6.10",

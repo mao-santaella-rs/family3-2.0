@@ -9,7 +9,8 @@ export default new Vuex.Store({
     db: firestore,
     auth: auth,
     people: null,
-    familyTree: null,
+    familyTree: {},
+    lines: null,
     session: {
       'login': null,
       'alias': null,
@@ -22,10 +23,7 @@ export default new Vuex.Store({
       state.people = val
     },
     storeFamilyTreeData: (state, val) => {
-      state.familyTree = {
-        tree: createTreeObj(val),
-        lines: createlinesObj(val)
-      }
+      state.familyTree = createTreeObj(val)
 
       function createTreeObj (objectP) {
         let flyCount = 1
@@ -147,32 +145,28 @@ export default new Vuex.Store({
           return agregarTreeObject(obj[parts[0]], parts.slice(1).join('.'), key, familyId, relation)
         }
       }
-
-      function createlinesObj (objectP) {
-        let linesObject = {}
-        for (let key in objectP) {
-          let personMom = objectP[key].conections.mother
-          let personDad = objectP[key].conections.father
-          
-          // TODO change sintax
-          if (personMom && personDad) {
-            linesObject[key] = 'a' + personMom + personDad
-          } else if (personMom) {
-            linesObject[key] = 'a' + personMom
-          } else if (personDad) {
-            linesObject[key] = 'a' + personDad
-          } else {
-            linesObject[key] = null
-          }
+    },
+    storeLinesData: (state, val) => {
+      let linesObject = {}
+      for (const key in val) {
+        const personMom = val[key].conections.mother
+        const personDad = val[key].conections.father
+        
+        // TODO change sintax
+        if (personMom && personDad) {
+          linesObject[key] = 'a' + personMom + personDad
+        } else if (personMom) {
+          linesObject[key] = 'a' + personMom
+        } else if (personDad) {
+          linesObject[key] = 'a' + personDad
+        } else {
+          linesObject[key] = null
         }
-        return linesObject
       }
+      state.lines = linesObject
     },
     storeSessionData: (state, val) => {
       state.session = val
-    },
-    storeLinesData: (state, val) => {
-      state.lines = val
     }
   },
   actions: {
@@ -187,6 +181,7 @@ export default new Vuex.Store({
           })
           commit('storePeopleData', dbObject)
           commit('storeFamilyTreeData', dbObject)
+          commit('storeLinesData', dbObject)
         })
     },
     sessionV: ({ state, commit }) => {

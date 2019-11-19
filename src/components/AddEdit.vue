@@ -4,11 +4,14 @@
   h5.card-title(v-else) Add Relative
   .row
     .col-md-6
-      label(for='form-name') Name
-      input#form-name(
-        type='text'
-        v-model="name"
-      )
+      .input-ctnr
+        input#form-name(
+          type='text'
+          v-model="name"
+        )
+        label(for='form-name') Name
+
+    .col-md-6.input-ctnr
       .form-check.form-check-inline
         input#form-sex-m.form-check-input(
           type='radio'
@@ -16,7 +19,8 @@
           v-model="sex"
           value='m'
         )
-        label.form-check-label(for='form-sex-m') Masculine
+        label.form-check-label(for='form-sex-m') M
+
       .form-check.form-check-inline
         input#form-sex-f.form-check-input(
           type='radio'
@@ -24,79 +28,132 @@
           v-model="sex"
           value='f'
         )
-        label.form-check-label(for='form-sex-f') Femenine
-    .col-md-6
-      label(for='form-nickname') Nick Name
-      input#form-nickname(type='text',v-model="nk_name")
-    .col-md-6
-      label(for='form-mother') Mother
-      select#form-mother(v-model="mother")
-        option(
-          v-for="(person,key,index) in femenine"
-          :key="key + index"
-          :value="key"
-        ) {{person.name}}
-    .col-md-6
-      label(for='form-father') Father
-      select#form-father(
-        v-model="father"
-      )
-        option(
-          v-for="(person,key,index) in masculine"
-          :key="key + index"
-          :value="key"
-        ) {{person.name}}
-    .col-md-6
-      label(for='form-spouse') Spouse
-      select#form-spouse(v-model="spouse")
-        option(
-          v-for="(person,key,index) in people"
-          :key="index + key"
-          :value="key"
-        ) {{person.name}}
-    .col-md-6
-      label(for='form-img') Image Url
-      input#form-img(type='text' v-model="image")
-    .col-md-6
-      label(for='form-birth') Birth Day
-      input#form-birth(
-        type='date'
-        v-model="b_day_p"
-        placeholder="yyyy-mm-dd"
-      )
+        label.form-check-label(for='form-sex-f') F
+
       .form-check.form-check-inline
-        input#form-dead-q.form-check-input(
-          type='checkbox'
-          value='true'
-          v-model="dead"
-        )
-        label.form-check-label(for='form-dead-q') Deceased
-    .col-md-6(v-if="dead")
-      label(for='form-dead') Deceased Date
-      input#form-dead(
-        type='date'
-        v-model="d_day_p"
-        placeholder="yyyy-mm-dd"
-      )
+        label.form-check-label Sex:
+
     .col-md-6
-      label(for='form-bio') Bio
-      textarea#form-bio(
-        rows='3'
-        v-model="bio"
-      )
+      .input-ctnr
+        input#form-nickname(
+          type='text'
+          v-model="nk_name"
+        )
+        label(for='form-nickname') Nick Name
+
+    .col-md-6
+      .input-ctnr
+        select#form-mother(v-model="mother")
+          option(
+            v-for="(person,key,index) in femenine"
+            :key="key + index"
+            :value="key"
+          ) {{person.name}}
+        label(for='form-mother') Mother
+
+    .col-md-6
+      .input-ctnr
+        select#form-father(v-model="father")
+          option(
+            v-for="(person,key,index) in masculine"
+            :key="key + index"
+            :value="key"
+          ) {{person.name}}
+        label(for='form-father') Father
+    
+    .col-md-6
+      .input-ctnr
+        select#form-spouse(v-model="spouse")
+          option(
+            v-for="(person,key,index) in people"
+            :key="index + key"
+            :value="key"
+          ) {{person.name}}
+        label(for='form-spouse') Spouse
+
+      //- .input-ctnr
+        label(for='form-img') Image Url
+        input#form-img(type='text',v-model="image")
+
+    .col-md-6
+      .input-ctnr
+        
+        .form-check.form-check-inline
+          input#form-dead-q.form-check-input(
+            type='checkbox'
+            value='true'
+            v-model="dead"
+          )
+          label.form-check-label(for='form-dead-q') Deceased
+
+        input#form-birth(
+          type='date'
+          v-model="b_day_p"
+          placeholder="yyyy-mm-dd"
+        )
+        label(for='form-birth') Birth Day
+
+    .col-md-6
+      .input-ctnr(v-if="dead")
+        input#form-dead(
+          type='date'
+          v-model="d_day_p"
+          placeholder="yyyy-mm-dd"
+        )
+        label(for='form-dead') Deceased Date
+    
+    .col-md-6
+      .input-ctnr
+        textarea#form-bio(
+          rows='7'
+          v-model="bio"
+        )
+        label(for='form-bio') Bio
+
+    .col-md-6
+
+      .image__selection
+        .input-file
+          label.input-file__label Select image
+          input#my-file.input-file-input(
+            type="file"
+            @change="selectFile($event)"
+          )
+          label.input-file-label(for="my-file") Select a file...
+
+          p.file-return(
+            v-if="selected_img"
+          ) 
+            b Selected file
+            br 
+            | {{selected_img}}
+
+          button(
+            v-if="image_saved"
+            @click.prevent="processFile()"
+          ) Save Image
+
+        .new-image(:style="{'background-image': 'url(' + image +')'}")
+
+      //- .mao
+      //- a(:href="image", title="title").class img
+
     .col-12(v-if="feedback")
       p(v-html="feedback")
+
     .col-12.form-action
       button(
         v-if="$route.name == 'edit'"
-        @click.prevent="updateData()"
+        @click.prevent="updateData(),pausePanZoom()"
       ) Update
+
       button(
         v-else
-        @click.prevent="addData()"
+        @click.prevent="addData(),pausePanZoom()"
       ) Add
+
       a.lnk.lnk-delete(
-        @click.prevent="deleteData()"
+        @click.prevent="deleteData(),pausePanZoom()"
         href
         v-if="$route.name == 'edit'"
         title="Delete"
@@ -125,17 +182,76 @@ export default {
       dead: false,
       feedback: false,
       feedback_text: null,
-      app_update: false
+      app_update: false,
+
+      selected_img: null,
+      image_saved: null,
+      img_obj: null
     }
   },
   watch: {
   },
   methods: {
+    pausePanZoom () {
+      this.$store.dispatch('panZoomChange', false)
+    },
+    resumePanZoom () {
+      this.$store.dispatch('panZoomChange', true)
+    },
+    selectFile (event) {
+      let file = event.target.files[0]
+      this.selected_img = file.name
+
+      var fr = new FileReader()
+
+      fr.onload = function (e) { 
+        this.image = e.target.result
+        this.img_obj = file
+      }
+
+      fr.readAsDataURL(file)
+    },
+    processFile () {
+      let name = this.name.replace(/\s+/g, '-').toLowerCase()
+      let re = /(?:\.([^.]+))?$/
+      let ext = re.exec(this.img_obj.name)[1]
+
+      let storageRef = this.firebase.storage().ref()
+
+      var imageRef = storageRef.child('photos/' + name + '.' + ext)
+
+      let task = imageRef.put(this.img_obj)
+
+      task.on('state_changed',
+        snapshot => {
+          var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+          // TODO PONER EL PORCENTAGE EN LA VISTA
+          console.log('Upload is ' + progress + '% done')
+        }, 
+        error => {
+          switch (error.code) {
+            // User doesn't have permission to access the object
+            case 'storage/unauthorized': break
+            // User canceled the upload
+            case 'storage/canceled': break
+            // Unknown error occurred, inspect error.serverResponse
+            case 'storage/unknown': break
+          }
+        },
+        () => {
+          // Upload completed successfully, now we can get the download URL
+          task.snapshot.ref.getDownloadURL()
+            .then(downloadURL => {
+              this.image_saved = true
+              this.image = downloadURL
+            })
+        })
+    },
     stateValidation () {
       // if the computed property people is ready
       if (this.people) {
         // check if is already updated
-        if (!this.app_update) {          
+        if (!this.app_update) {
           // If the route.name is edit and If there is an id in the route params
           if (this.$route.name === 'edit' && this.$route.params.id) {
             this.loadData()
@@ -226,8 +342,6 @@ export default {
       }
 
       function actualizarDatos () {
-        console.log('actualizando datos')
-
         this.dataBase.doc(routeId).update({
           name: this.name,
           nickname: this.nk_name,
@@ -246,6 +360,7 @@ export default {
           }
         })
           .then(function (docRef) {
+            // TODO PONER EL MENSAGE DE SE GUARDO EN LA VISTA
             console.log('Se guardo Correctamente')
             this.$router.go(-1)
           })
@@ -276,6 +391,7 @@ export default {
       if (confirmation) {
         this.dataBase.doc(routeId).delete()
           .then(() => {
+            // TODO PONER MENSAGE EN LA VISTA
             console.log('Document successfully deleted!')
             this.$store.dispatch('getData')
             this.$router.go(-1)
@@ -333,6 +449,7 @@ export default {
           }
         })
           .then(function (docRef) {
+            // TODO PONER MENSAGE DE "GUARDADO" EN LA VISA
             console.log('Document written with ID: ', docRef.id)
             this.$router.go(-1)
           })
@@ -363,15 +480,14 @@ export default {
     }
   },
   computed: {
-
     people () {
       return this.$store.state.personas
     },
     masculine () {
-      return this.genderSel('m')
+      return this.$store.getters.genderSel('m')
     },
     femenine () {
-      return this.genderSel('f')
+      return this.$store.getters.genderSel('f')
     },
     dataBase () {
       return this.$store.state.db.collection('people')
@@ -379,25 +495,27 @@ export default {
   },
   created () {
     this.stateValidation()
+    this.pausePanZoom()
   },
   updated () {
     this.stateValidation()
-  },  
-  beforeRouteEnter (to, from, next) {
-    // called before the route that renders this component is confirmed.
-    // does NOT have access to `this` component instance,
-    // because it has not been created yet when this guard is called!
-    next(vm => {
-      // access to component instance via `vm`
-      console.log(vm.$store.state.session.login)
-      
-      if (vm.$store.state.session.login) {
-        next()
-      } else {
-        next('/m/login')
-      }
-    })
   },
+  // beforeRouteEnter (to, from, next) {
+  //   // called before the route that renders this component is confirmed.
+  //   // does NOT have access to `this` component instance,
+  // // because it has not been created yet when this guard is called!
+  // // next(vm => {
+  // // // access to component instance via `vm`
+  // // console.log(vm.$store.state.session.login);
+      
+  // //   if (vm.$store.state.session.login) {
+  // //     next()
+  // //   } else {
+  // //     next("/m/login")
+  // //   }
+  // // })
+    
+  // },
   beforeRouteUpdate (to, from, next) {
     // react to route changes...
     // don't forget to call next()
@@ -409,5 +527,4 @@ export default {
 </script>
 
 <style lang="sass">
-
 </style>

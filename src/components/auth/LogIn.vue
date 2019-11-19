@@ -26,26 +26,22 @@ export default {
   },
   methods: {
     login () {
-      let app = this
-      if (app.user && app.password) {
-        this.$store.state.auth.signInWithEmailAndPassword(app.user, app.password)
+      if (this.user && this.password) {
+        this.$store.state.auth.signInWithEmailAndPassword(this.user, this.password)
           .then(() => {
-          // app.$router.push({ path: '/' })
-            app.$router.go(-1)
+            this.$router.go(-1)
           })
           .catch(function (error) {
-          // Handle Errors here.
             console.error(error)
-          // ...
           })
       } else {
-        if (app.user) {
+        // TODO show that needs a username an password
+        if (this.user) {
           
         }
       }
     }
   }
-  
 }
 </script>
 

@@ -13,7 +13,7 @@
 
 <script>
 export default {
-  name: 'vHeader',
+  name: 'Header',
   data () {
     return {
       
@@ -21,12 +21,20 @@ export default {
   },
   methods: {
     signOut () {
-      this.$store.state.auth.signOut()
+      this.auth.signOut().then(() => {
+        // TODO show succsesfull signout
+      }).catch(function (error) {
+        // TODO show error had happend
+        console.error(error)
+      })
     }
   },
   computed: {
     session () {
       return this.$store.state.session
+    },
+    auth () {
+      return this.$store.state.auth
     }
   }
 }

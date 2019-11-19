@@ -33,40 +33,39 @@ export default {
   },
   methods: {
     signup () {
-      let app = this
+      const auth = this.$store.state.auth
       let db = this.$store.state.db
-      app.feedback_text = null
+      this.feedback_text = null
 
-      if (app.alias && app.user && app.password) {
-        app.slug = slugify(app.alias)
-        let ref = db.collection('users').doc(app.slug)
+      if (this.alias && this.user && this.password) {
+        this.slug = slugify(this.alias)
+        let ref = db.collection('users').doc(this.slug)
         ref.get().then(doc => {
           console.log(doc)
           if (doc.exists) {
-            app.feedback_text = 'el usuario ya existe'
+            this.feedback_text = 'el usuario ya existe'
           } else {
-            // app.feedback_text = "el usuario esta disponible";
-            this.$store.state.auth.createUserWithEmailAndPassword(app.user, app.password)
+            // this.feedback_text = "el usuario esta disponible";
+            auth.createUserWithEmailAndPassword(this.user, this.password)
               .then(cred => {
                 console.log(cred.user)
                 ref.set({
-                  alias: app.alias,
+                  alias: this.alias,
                   user_id: cred.user.uid
                 })
               }).then(() => {
-                // app.$router.push({path: '/'})
+                // this.$router.push({path: '/'})
                 
-                app.$router.go(-1)
+                this.$router.go(-1)
               })
               .catch(err => {
                 console.log(err)
-                app.feedback_text = err.message
+                this.feedback_text = err.message
               })
           }
         })
-        console.log(app.slug)
       } else {
-        app.feedback_text = 'hay que entrar un alias'
+        this.feedback_text = 'hay que entrar un alias'
       }
 
       // in functions
@@ -75,14 +74,13 @@ export default {
           /* eslint-disable */
           .replace(/\s+/g, '-') // Replace spaces with
           .replace(/[^\w\-]+/g, '') // Remove all non-word chars
-          .replace(/\-\-+/g, '-') // Replace multiple - with single
+          .replace(/\-\-+/g, '-') // Replace multiple - with single -
           .replace(/^-+/, '') // Trim - from start of text
           .replace(/-+$/, '') // Trim - from end of text
           /* eslint-enable */
       }
     }
-  }
-  
+  }  
 }
 </script>
 

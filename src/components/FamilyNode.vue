@@ -41,11 +41,6 @@
 export default {
   name: 'vfamilynode',
   props: ['datos', 'personas'],
-  data () {
-    return {
-    }
-  },
-  watch: {},
   methods: {
     parentsFlag (couple) {
       if (couple.length > 1) {
@@ -84,8 +79,6 @@ export default {
 
       // esto es porque el ultimo componente en terminar es el primero
       if (currentRow === lowestRow) {
-        console.log('ultima filia')
-        
         // SCROLLING LEFT START
         const fmlyWrapper = document.querySelector('#app')
         let fmlyWrapperBcr = fmlyWrapper.getBoundingClientRect()
@@ -110,7 +103,6 @@ export default {
 
         // creacion de svg
         let $svg = fnCreateSvg($line, svgId, svgWidth, svgHeight)
-        console.log(this.lines)
 
         // loop in $store.lines
         for (let key in this.lines) {

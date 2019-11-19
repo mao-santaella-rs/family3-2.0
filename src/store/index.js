@@ -16,7 +16,8 @@ export default new Vuex.Store({
       'alias': null,
       'uid': null,
       'email': null
-    }
+    },
+    panZoom: true
   },
   mutations: {
     storePeopleData: (state, val) => {
@@ -167,6 +168,9 @@ export default new Vuex.Store({
     },
     storeSessionData: (state, val) => {
       state.session = val
+    },
+    storePanZoom: (state, val) => {
+      state.panZoom = val
     }
   },
   actions: {
@@ -218,8 +222,23 @@ export default new Vuex.Store({
 
         commit('storeSessionData', userObjectP)
       })
+    },
+    panZoomChange: (context, val) => {
+      context.commit('storePanZoom', val)
     }
   },
   getters: {
+    genderSel: (state) => gender => {
+      let people = state.people
+      let objP = {}
+      for (let key in people) {
+        if (people.hasOwnProperty(key)) {
+          if (people[key].sex === gender) {
+            objP[key] = people[key]
+          }
+        }
+      }
+      return objP
+    }
   }
 })

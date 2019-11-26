@@ -34,12 +34,12 @@ export default {
   methods: {
     signup () {
       const auth = this.$store.state.auth
-      let db = this.$store.state.db
+      const db = this.$store.state.db
       this.feedback_text = null
 
       if (this.alias && this.user && this.password) {
         this.slug = slugify(this.alias)
-        let ref = db.collection('users').doc(this.slug)
+        const ref = db.collection('users').doc(this.slug)
         ref.get().then(doc => {
           console.log(doc)
           if (doc.exists) {
@@ -48,14 +48,12 @@ export default {
             // this.feedback_text = "el usuario esta disponible";
             auth.createUserWithEmailAndPassword(this.user, this.password)
               .then(cred => {
-                console.log(cred.user)
                 ref.set({
                   alias: this.alias,
                   user_id: cred.user.uid
                 })
               }).then(() => {
                 // this.$router.push({path: '/'})
-                
                 this.$router.go(-1)
               })
               .catch(err => {

@@ -5,13 +5,16 @@
   .row
     .col-md-6
       .input-ctnr
+        label(for='form-name') Name
         input#form-name(
           type='text'
           v-model="name"
         )
-        label(for='form-name') Name
 
     .col-md-6.input-ctnr
+      .form-check.form-check-inline
+        label.form-check-label Sex:
+
       .form-check.form-check-inline
         input#form-sex-m.form-check-input(
           type='radio'
@@ -30,46 +33,43 @@
         )
         label.form-check-label(for='form-sex-f') F
 
-      .form-check.form-check-inline
-        label.form-check-label Sex:
-
     .col-md-6
       .input-ctnr
+        label(for='form-nickname') Nick Name
         input#form-nickname(
           type='text'
           v-model="nk_name"
         )
-        label(for='form-nickname') Nick Name
 
     .col-md-6
       .input-ctnr
+        label(for='form-mother') Mother
         select#form-mother(v-model="mother")
           option(
             v-for="(person,key,index) in femenine"
             :key="key + index"
             :value="key"
           ) {{person.name}}
-        label(for='form-mother') Mother
 
     .col-md-6
       .input-ctnr
+        label(for='form-father') Father
         select#form-father(v-model="father")
           option(
             v-for="(person,key,index) in masculine"
             :key="key + index"
             :value="key"
           ) {{person.name}}
-        label(for='form-father') Father
     
     .col-md-6
       .input-ctnr
+        label(for='form-spouse') Spouse
         select#form-spouse(v-model="spouse")
           option(
             v-for="(person,key,index) in people"
             :key="index + key"
             :value="key"
           ) {{person.name}}
-        label(for='form-spouse') Spouse
 
       //- .input-ctnr
         label(for='form-img') Image Url
@@ -79,36 +79,36 @@
       .input-ctnr
         
         .form-check.form-check-inline
+          label.form-check-label(for='form-dead-q') Deceased
           input#form-dead-q.form-check-input(
             type='checkbox'
             value='true'
             v-model="dead"
           )
-          label.form-check-label(for='form-dead-q') Deceased
 
+        label(for='form-birth') Birth Day
         input#form-birth(
           type='date'
           v-model="b_day_p"
           placeholder="yyyy-mm-dd"
         )
-        label(for='form-birth') Birth Day
 
     .col-md-6
       .input-ctnr(v-if="dead")
+        label(for='form-dead') Deceased Date
         input#form-dead(
           type='date'
           v-model="d_day_p"
           placeholder="yyyy-mm-dd"
         )
-        label(for='form-dead') Deceased Date
     
     .col-md-6
       .input-ctnr
+        label(for='form-bio') Bio
         textarea#form-bio(
           rows='7'
           v-model="bio"
         )
-        label(for='form-bio') Bio
 
     .col-md-6
 
@@ -527,4 +527,118 @@ export default {
 </script>
 
 <style lang="sass">
+.form-action
+  display: flex
+  justify-content: space-between
+  align-items: center
+  flex-direction: row-reverse
+
+.image__selection
+  display: flex
+  justify-content: space-around
+  margin-bottom: 15px
+  .input-file
+    margin-right: 15px
+
+.input-file__label
+  margin-bottom: 10px
+
+.input-file
+  position: relative
+  // width: 150px
+
+.input-file-input
+  +position(absolute, 0 null null 0)
+  width: 100%
+  opacity: 0
+  pointer-events: none
+
+.input-file-label
+  display: block
+  padding: 10px 20px
+  text-align: center
+  background-color: $action-color
+  color: $button-text-color
+  transition: all $base-duration $base-timing
+  border-radius: $base-border-radius
+  cursor: pointer
+  margin-bottom: 10px
+
+  &:hover, &:focus
+    background-color: $link-hover-color
+    color: $white
+
+.file-return
+  margin: 0
+  margin-bottom: 10px
+  font-style: italic
+  font-size: .9rem
+
+  br
+    line-height: 1em
+
+.new-image
+  width: 170px
+  height: 130px
+  background-position: center
+  background-size: cover
+  background-color: $lightest-gray
+  border-radius: 15px
+  box-shadow: $base-box-shadow
+
+.input-ctnr
+  display: flex
+  align-items: center
+  position: relative
+  flex-direction: row-reverse
+  justify-content: flex-end
+  margin-bottom: 15px
+  font-size: 1rem
+  line-height: 1em
+
+  input[type="text"], input[type='date'], select, textarea
+    border: none
+    box-shadow: none
+    border-radius: 0
+    margin: 0
+    line-height: inherit
+
+    &:focus
+
+      & ~ label
+        color: $color-secundario
+        &:after
+          background-color: $color-secundario
+
+    & ~ label
+      margin: 0
+      line-height: inherit
+      white-space: nowrap
+      &:before
+        content: ""
+        display: block
+        height: 100%
+        width: 1px
+        +position(absolute, null 0 0 null)
+        background-color: $lightest-gray
+        transition: background-color $base-duration $base-timing
+        opacity: 0
+
+      &:after
+        content: ""
+        display: block
+        width: 100%
+        height: 1px
+        +position(absolute, null null 0 0)
+        background-color: $lightest-gray
+        transition: background-color $base-duration $base-timing
+
+  textarea
+    line-height: 1.2em !important
+    &:focus
+      & ~ label
+        &:before
+          background-color: $color-secundario
+          opacity: 1
+      
 </style>

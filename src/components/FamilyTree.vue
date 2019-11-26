@@ -92,4 +92,32 @@ export default {
 </script>
 
 <style lang="sass">
+
+.line
+  position: absolute
+  top: 0
+  right: 0
+  bottom: 0
+  left: 0
+
+  svg
+    display: block
+    stroke: $color-primario
+    fill: none
+    stroke-width: 2px
+
+.fmly-wrpr
+  display: inline-block
+  position: relative
+  cursor: grab
+  z-index: 0
+  +auto-height
+  &::after
+    clear: both
+    content: ""
+    display: block
+
+  &:active
+    cursor: grabbing
+
 </style>

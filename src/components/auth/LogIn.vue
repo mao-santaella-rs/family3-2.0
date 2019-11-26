@@ -32,6 +32,7 @@ export default {
             this.$router.go(-1)
           })
           .catch(function (error) {
+            // TODO show error in the view
             console.error(error)
           })
       } else {

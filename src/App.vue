@@ -1,14 +1,14 @@
 <template lang="pug">
 
   #app.app
-    header
+    Header
     router-view
     family-tree(ref="fmlyt")
     .control-panel
       //- a(@click.prevent="stopScroll()",title="cancel scroll").btn--control
       //-   img(src="img/icons/scroll-icon.svg")
       a(@click.prevent="centerPanZoom()",title="center tree").btn--control
-        img(src="img/icons/center-icon.svg")
+        img(src="./assets/icons/center-icon.svg")
 
 </template>
 
@@ -41,7 +41,15 @@ export default {
 </script>
 
 <style lang="sass">
-@import "./styles/main.sass"
-html
+.app
   background: url("./assets/bg.png")
+
+.control-panel
+  padding: 10px
+  z-index: 100
+  // background-image: url("./assets/bg.jpg")
+  +position(fixed,0 0 null null)
+  display: flex
+  border-bottom-left-radius: 10px
+
 </style>

@@ -3,12 +3,12 @@
     .header__logo
       img(src="../assets/logo-l.svg", alt="")
     .header__user
-      .header__user-txt(v-if="session.login")
-        span {{session.alias}}
+      .header__user-txt
+        span(v-if="session.login") {{session.alias}}
       .header__user__action(v-if="session.login")
-        a(href,@click.prevent="signOut()").lnk log Out
-      .header__user__action(v-if="!session.login")
-        router-link(:to="{name: 'login'}").lnk log In
+        a.lnk(@click.prevent="signOut()") log Out
+      .header__user__action(v-else)
+        router-link.lnk(:to="{name: 'login'}") log In
 </template>
 
 <script>
@@ -46,7 +46,6 @@ export default {
   +position(fixed, 0 null null 0)
   z-index: 100
   background-color: rgba($black,0.7)
-  // background-image: url("../assets/bg.png")
   border-bottom-right-radius: 20px
 
 .header__logo

@@ -188,47 +188,51 @@ export default new Vuex.Store({
           commit('storeLinesData', dbObject)
         })
     },
-    sessionV: ({ state, commit }) => {
-      state.auth.onAuthStateChanged(user => {
-        let userObjectP
-        if (user) {
-          // User is signed in.
-          state.db.collection('users')
-            .where('user_id', '==', user.uid)
-            .get()
-            .then(querySnapshot => {
-              querySnapshot.forEach(doc => {
-                let userP = doc.data()
+    sessionV: async ({ state, commit }) => {
+      try {
+        await state.auth.onAuthStateChanged(async user => {
+          let userObjectP
+          // User is logged in
+          if (user) {
+            try {
+              const dbUsersResponse = await state.db.collection('users')
+                .where('user_id', '==', user.uid)
+                .get()
+              dbUsersResponse.forEach(doc => {
+                let userData = doc.data()
                 userObjectP = {
                   'login': true,
-                  'alias': userP.alias,
+                  'alias': userData.alias,
                   'uid': user.uid,
                   'email': user.email
                 }
               })
-            })
-            .catch(error => {
-              console.error('Error loging in:', error)
-            })
-        } else {
-          // No user is signed in.
-          userObjectP = {
-            'login': false,
-            'alias': null,
-            'uid': null,
-            'email': null
+            } catch (e) {
+              // TODO display error
+              console.error(e)
+            }
+          } else {
+            // No user is signed in.
+            userObjectP = {
+              'login': false,
+              'alias': null,
+              'uid': null,
+              'email': null
+            }
           }
-        }
-
-        commit('storeSessionData', userObjectP)
-      })
+          commit('storeSessionData', userObjectP)
+        })
+      } catch (e) {
+        // TODO display error
+        console.error(e)
+      }
     },
     panZoomChange: (context, val) => {
       context.commit('storePanZoom', val)
     }
   },
   getters: {
-    genderSel: (state) => gender => {
+    genderSel: state => gender => {
       let people = state.people
       let objP = {}
       for (let key in people) {

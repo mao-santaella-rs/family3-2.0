@@ -591,13 +591,13 @@ export default {
   align-items: center
   position: relative
   flex-direction: row-reverse
-  justify-content: flex-end
+  // justify-content: flex-end
   margin-bottom: 15px
   font-size: 1rem
   line-height: 1em
 
   input[type="text"], input[type='date'], select, textarea
-    border: none
+    // border: none
     box-shadow: none
     border-radius: 0
     margin: 0
@@ -614,6 +614,7 @@ export default {
       margin: 0
       line-height: inherit
       white-space: nowrap
+      
       &:before
         content: ""
         display: block

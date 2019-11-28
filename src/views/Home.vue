@@ -1,21 +1,18 @@
 <template lang="pug">
 
-  #home
-    vfamilytree
+  .home
+    family-tree
+    router-view
 
 </template>
 
 <script>
-import vfamilytree from '../components/FamilyTree.vue'
+import familyTree from '../components/FamilyTree.vue'
 
 export default {
-  name: 'home',
+  name: 'Home',
   components: {
-    vfamilytree
-  },
-  data () {
-    return {
-    }
+    familyTree
   }
 }
 </script>

@@ -32,6 +32,7 @@ export default {
     }
   },
   methods: {
+    // TODO make it async await
     signup () {
       const auth = this.$store.state.auth
       const db = this.$store.state.db
@@ -41,7 +42,6 @@ export default {
         this.slug = slugify(this.alias)
         const ref = db.collection('users').doc(this.slug)
         ref.get().then(doc => {
-          console.log(doc)
           if (doc.exists) {
             this.feedback_text = 'el usuario ya existe'
           } else {
@@ -53,7 +53,6 @@ export default {
                   user_id: cred.user.uid
                 })
               }).then(() => {
-                // this.$router.push({path: '/'})
                 this.$router.go(-1)
               })
               .catch(err => {

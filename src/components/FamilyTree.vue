@@ -1,14 +1,28 @@
 <template lang="pug">
-  .fmly-wrpr(ref="wrapper")
-    #line.line
+  .fmly-tree(ref="tree")
+    .fmly-wrpr(ref="wrapper")
+      #line.line
 
-    FamilyNode(
-      v-if="Object.keys(familyTree).length > 0"
-      :datos='familyTree'
-      :personas="people"
-      @centerPanZoom="centerPanZoom()"
-    )
+      FamilyNode(
+        v-if="Object.keys(familyTree).length > 0"
+        :datos='familyTree'
+        :personas="people"
+        @centerPanZoom="centerPanZoom"
+      )
     
+    .control-panel
+      a.btn--control(
+        title="cancel scroll"
+        @click.prevent="togglePanZoom"
+      )
+        img(src="../assets/icons/scroll-icon.svg")
+
+      a.btn--control(
+        @click.prevent="getCords"
+        title="center tree"
+      )
+        img(src="../assets/icons/center-icon.svg")
+      
 </template>
 
 <script>
@@ -22,9 +36,16 @@ export default {
   },
   data () {
     return {
-      paneoZoom: null,
+      panZoom: null,
       initialPanZoom: null
     }
+  },
+  mounted () {
+    this.panZoom = createPanZoom(this.$refs.wrapper, {
+      maxZoom: 1,
+      minZoom: 0.1
+    })
+    this.initialPanZoom = this.panZoom.getTransform()
   },
   watch: {
     storePanZoom () {
@@ -35,7 +56,6 @@ export default {
       }
     }
   },
-
   computed: {
     familyTree () {
       return this.$store.state.familyTree
@@ -49,44 +69,41 @@ export default {
   },
   methods: {
     centerPanZoom () {
-      this.paneoZoom.centerOn(this.$refs.wrapper, 'x')
+      this.panZoom.centerOn(this.$refs.tree)
     },
-    panZoom () {
-      this.paneoZoom = createPanZoom(this.$refs.wrapper, {
-        maxZoom: 1,
-        minZoom: 0.1
-      })
+    async togglePanZoom () {
+      if (this.panZoom.isPaused()) {
+        this.resumePanZoom()
+        // this.panZoom.resume()
+      } else {
+        this.pausePanZoom()
+        // this.panZoom.pause()
+      }
+    },
+    getCords () {
+      console.log(this.panZoom.getTransform())
+    },
+    pausePanZoom () {
+      this.initialPanZoom = { ...this.panZoom.getTransform() }
+      this.panZoom.pause()
+      this.panZoom.moveTo(0, 0)
+      this.panZoom.zoomAbs(0, 0, 1)
     },
     resumePanZoom () {
-      this.paneoZoom.resume()
-      this.paneoZoom.moveTo(
+      this.panZoom.moveTo(
         this.initialPanZoom.x,
         this.initialPanZoom.y
       )
-      this.paneoZoom.zoomAbs(
+      this.panZoom.zoomAbs(
         this.initialPanZoom.x,
         this.initialPanZoom.y,
         this.initialPanZoom.scale
       )
-    },
-    pausePanZoom () {
-      let transform = this.paneoZoom.getTransform()
-      this.initialPanZoom = {
-        x: transform.x,
-        y: transform.y,
-        scale: transform.scale
-      }
-      this.paneoZoom.pause()
-      this.paneoZoom.moveTo(0, 0)
-      this.paneoZoom.zoomAbs(0, 0, 1)
+      this.panZoom.resume()
     }
   },
-  mounted () {
-    this.panZoom()
-    this.initialPanZoom = this.paneoZoom.getTransform()
-  },
   beforeDestroy () {
-    this.paneoZoom.dispose()
+    this.panZoom.dispose()
   }
 }
 </script>
@@ -119,5 +136,12 @@ export default {
 
   &:active
     cursor: grabbing
+
+.control-panel
+  padding: 10px
+  z-index: 100
+  +position(fixed,0 0 null null)
+  display: flex
+  border-bottom-left-radius: 10px
 
 </style>

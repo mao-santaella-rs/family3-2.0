@@ -1,7 +1,7 @@
 <template lang="pug">
 #addedit
-  h5.card-title(v-if="$route.name == 'edit'") Edit Relative
-  h5.card-title(v-else) Add Relative
+  h5(v-if="$route.name == 'edit'") Edit Relative
+  h5(v-else) Add Relative
   .row
     .col-md-6
       .input-ctnr
@@ -11,27 +11,27 @@
           v-model="name"
         )
 
-    .col-md-6.input-ctnr
-      .form-check.form-check-inline
-        label.form-check-label Sex:
+    .col-md-6
+      .input-ctnr
+        label Sex:
 
-      .form-check.form-check-inline
-        input#form-sex-m.form-check-input(
-          type='radio'
-          name='formsex'
-          v-model="sex"
-          value='m'
-        )
-        label.form-check-label(for='form-sex-m') M
+        .form-check.form-check-inline
+          input#form-sex-m.form-check-input(
+            type='radio'
+            name='formsex'
+            v-model="sex"
+            value='m'
+          )
+          label.form-check-label(for='form-sex-m') M
 
-      .form-check.form-check-inline
-        input#form-sex-f.form-check-input(
-          type='radio'
-          name='formsex'
-          v-model="sex"
-          value='f'
-        )
-        label.form-check-label(for='form-sex-f') F
+        .form-check.form-check-inline
+          input#form-sex-f.form-check-input(
+            type='radio'
+            name='formsex'
+            v-model="sex"
+            value='f'
+          )
+          label.form-check-label(for='form-sex-f') F
 
     .col-md-6
       .input-ctnr
@@ -76,16 +76,8 @@
         input#form-img(type='text',v-model="image")
 
     .col-md-6
-      .input-ctnr
-        
-        .form-check.form-check-inline
-          label.form-check-label(for='form-dead-q') Deceased
-          input#form-dead-q.form-check-input(
-            type='checkbox'
-            value='true'
-            v-model="dead"
-          )
 
+      .input-ctnr
         label(for='form-birth') Birth Day
         input#form-birth(
           type='date'
@@ -94,9 +86,19 @@
         )
 
     .col-md-6
-      .input-ctnr(v-if="dead")
-        label(for='form-dead') Deceased Date
+      .input-ctnr
+        .form-check.form-check-inline
+          input#form-dead-q.form-check-input(
+            type='checkbox'
+            value='true'
+            v-model="dead"
+          )
+          label(for='form-dead-q') 
+            span Deceased 
+            span(v-if="dead") date
+
         input#form-dead(
+          v-if="dead"
           type='date'
           v-model="d_day_p"
           placeholder="yyyy-mm-dd"
@@ -111,32 +113,9 @@
         )
 
     .col-md-6
-
-      .image__selection
-        .input-file
-          label.input-file__label Select image
-          input#my-file.input-file-input(
-            type="file"
-            @change="selectFile($event)"
-          )
-          label.input-file-label(for="my-file") Select a file...
-
-          p.file-return(
-            v-if="selected_img"
-          ) 
-            b Selected file
-            br 
-            | {{selected_img}}
-
-          button(
-            v-if="image_saved"
-            @click.prevent="processFile()"
-          ) Save Image
-
-        .new-image(:style="{'background-image': 'url(' + image +')'}")
-
-      //- .mao
-      //- a(:href="image", title="title").class img
+      .input-ctnr
+        label Select image
+        new-image
 
     .col-12(v-if="feedback")
       p(v-html="feedback")
@@ -162,8 +141,12 @@
 </template>
 
 <script>
+import NewImage from './NewImage'
 export default {
   name: 'AddEdit',
+  components: {
+    NewImage
+  },
   data () {
     return {
       name: null,
@@ -193,47 +176,55 @@ export default {
   },
   methods: {
     pausePanZoom () {
+      console.log('Pause PanZoom')
       this.$store.dispatch('panZoomChange', false)
     },
     resumePanZoom () {
+      console.log('Resume PanZoom')
       this.$store.dispatch('panZoomChange', true)
     },
     selectFile (event) {
+      let app = this
       let file = event.target.files[0]
-      this.selected_img = file.name
+      app.selected_img = file.name
 
       var fr = new FileReader()
 
       fr.onload = function (e) { 
-        this.image = e.target.result
-        this.img_obj = file
+        console.log(e.target.result)
+        app.image = e.target.result
+        app.img_obj = file
       }
 
       fr.readAsDataURL(file)
     },
     processFile () {
-      let name = this.name.replace(/\s+/g, '-').toLowerCase()
+      let app = this
+      let name = app.name.replace(/\s+/g, '-').toLowerCase()
       let re = /(?:\.([^.]+))?$/
-      let ext = re.exec(this.img_obj.name)[1]
+      let ext = re.exec(app.img_obj.name)[1]
+      console.log(ext)
 
-      let storageRef = this.firebase.storage().ref()
+      let storageRef = app.firebase.storage().ref()
 
       var imageRef = storageRef.child('photos/' + name + '.' + ext)
 
-      let task = imageRef.put(this.img_obj)
+      let task = imageRef.put(app.img_obj)
 
       task.on('state_changed',
         snapshot => {
           var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-          // TODO PONER EL PORCENTAGE EN LA VISTA
+          
           console.log('Upload is ' + progress + '% done')
         }, 
         error => {
           switch (error.code) {
             // User doesn't have permission to access the object
             case 'storage/unauthorized': break
+
             // User canceled the upload
             case 'storage/canceled': break
+
             // Unknown error occurred, inspect error.serverResponse
             case 'storage/unknown': break
           }
@@ -242,64 +233,69 @@ export default {
           // Upload completed successfully, now we can get the download URL
           task.snapshot.ref.getDownloadURL()
             .then(downloadURL => {
-              this.image_saved = true
-              this.image = downloadURL
+              console.log('File available at', downloadURL)
+              app.image_saved = true
+              app.image = downloadURL
             })
         })
     },
     stateValidation () {
+      let app = this
       // if the computed property people is ready
-      if (this.people) {
+      if (app.people) {
         // check if is already updated
-        if (!this.app_update) {
+        if (!app.app_update) {
           // If the route.name is edit and If there is an id in the route params
-          if (this.$route.name === 'edit' && this.$route.params.id) {
-            this.loadData()
+          if (app.$route.name === 'edit' && app.$route.params.id) {
+            app.loadData()
           }
           // prevent re-update
-          this.app_update = true
+          app.app_update = true
         }
       }
     },
     genderSel (gender) {
-      let people = this.people
+      let app = this
+      let people = app.people
       let objP = {}
       for (var key in people) {
         if (people.hasOwnProperty(key)) {
           if (people[key].sex === gender) {
-            objP[key] = this.people[key]
+            objP[key] = app.people[key]
           }
         }
       }
       return objP
     },
     loadData () {
-      let people = this.people
-      let routeId = this.$route.params.id
+      let app = this
+      let people = app.people
+      let routeId = app.$route.params.id
       let person = people[routeId]
 
-      this.name = person.name
-      this.nk_name = person.nickname
-      this.sex = person.sex
-      this.mother = person.conections.mother
-      this.father = person.conections.father
-      this.spouse = person.conections.spouse
-      this.image = person.img
+      app.name = person.name
+      app.nk_name = person.nickname
+      app.sex = person.sex
+      app.mother = person.conections.mother
+      app.father = person.conections.father
+      app.spouse = person.conections.spouse
+      app.image = person.img
       
-      this.bio = person.bio
-      this.row = person.row
+      app.bio = person.bio
+      app.row = person.row
 
       if (person.dates.birth) {
-        this.b_day_p = dateTransform(person.dates.birth)
+        app.b_day_p = dateTransform(person.dates.birth)
       } else {
-        this.b_day_p = ''
+        app.b_day_p = ''
       }
       
+      // console.log("dead: " + person.dates.dead)
       if (person.dates.dead) {
-        this.d_day_p = dateTransform(person.dates.dead)
-        this.dead = true
+        app.d_day_p = dateTransform(person.dates.dead)
+        app.dead = true
       } else {
-        this.dead = false
+        app.dead = false
       }
       
       function dateTransform (timestamp) {
@@ -319,50 +315,55 @@ export default {
       }
     },
     updateData () {
-      let routeId = this.$route.params.id
-      let dbPersonas = this.people
+      let app = this
+      let routeId = app.$route.params.id
+      let dbPersonas = app.people
+      // console.log("update data");
 
-      this.feedback = validacion()
+      app.feedback = validacion()
 
       if (!validacion()) {
-        if (this.father !== dbPersonas[routeId].conections.father) {
-          this.row = dbPersonas[this.father].row + 1
+        // console.log("ya esta validado");
+        
+        if (app.father !== dbPersonas[routeId].conections.father) {
+          app.row = dbPersonas[app.father].row + 1
         }
-        if (this.mother !== dbPersonas[routeId].conections.mother) {
-          this.row = dbPersonas[this.mother].row + 1
+        if (app.mother !== dbPersonas[routeId].conections.mother) {
+          app.row = dbPersonas[app.mother].row + 1
         }
-        if (this.b_day_p) {
-          this.b_day = new Date(this.b_day_p + 'T00:00:01.0Z')
+        if (app.b_day_p) {
+          app.b_day = new Date(app.b_day_p + 'T00:00:01.0Z')
         }
-        if (this.d_day_p) {
-          this.d_day = new Date(this.d_day_p + 'T00:00:01.0Z')
+        if (app.d_day_p) {
+          app.d_day = new Date(app.d_day_p + 'T00:00:01.0Z')
         }
 
         actualizarDatos()
       }
 
       function actualizarDatos () {
-        this.dataBase.doc(routeId).update({
-          name: this.name,
-          nickname: this.nk_name,
-          row: this.row,
-          sex: this.sex,
-          bio: this.bio,
-          img: this.image,
+        console.log('actualizando datos')
+
+        app.dataBase.doc(routeId).update({
+          name: app.name,
+          nickname: app.nk_name,
+          row: app.row,
+          sex: app.sex,
+          bio: app.bio,
+          img: app.image,
           conections: {
-            father: this.father,
-            mother: this.mother,
-            spouse: this.spouse
+            father: app.father,
+            mother: app.mother,
+            spouse: app.spouse
           },
           dates: {
-            birth: this.b_day,
-            dead: this.d_day
+            birth: app.b_day,
+            dead: app.d_day
           }
         })
           .then(function (docRef) {
-            // TODO PONER EL MENSAGE DE SE GUARDO EN LA VISTA
             console.log('Se guardo Correctamente')
-            this.$router.go(-1)
+            app.$router.go(-1)
           })
           .catch(function (error) {
             console.error('Error adding document: ', error)
@@ -371,10 +372,10 @@ export default {
 
       function validacion () {
         let feedBack = ''
-        if (!this.name) {
+        if (!app.name) {
           feedBack = 'El nombre es un campo obligatorio<br>'
         }
-        if (!this.nk_name) {
+        if (!app.nk_name) {
           feedBack = feedBack + 'El apodo es un campo obligatorio<br>'
         }
         if (feedBack === '') {
@@ -384,44 +385,45 @@ export default {
       }
     },
     deleteData () {
-      let routeId = this.$route.params.id
-      let dbPersonas = this.people
+      let app = this
+      let routeId = app.$route.params.id
+      let dbPersonas = app.people
       // confirm troug confirm dialog
       var confirmation = confirm('Do you want to delete' + dbPersonas[routeId].name)
       if (confirmation) {
-        this.dataBase.doc(routeId).delete()
+        app.dataBase.doc(routeId).delete()
           .then(() => {
-            // TODO PONER MENSAGE EN LA VISTA
             console.log('Document successfully deleted!')
-            this.$store.dispatch('getData')
-            this.$router.go(-1)
+            app.$store.dispatch('getData')
+            app.$router.go(-1)
           }).catch(error => {
             console.error('Error removing document: ', error)
           })
       } else {
-        this.feedBack = 'You pressed Cancel!'
+        app.feedBack = 'You pressed Cancel!'
       }
     },
     addData () {
-      this.feedback = null
+      let app = this
+      app.feedback = null
       
-      this.feedback = validacion()
+      app.feedback = validacion()
 
       // if validation pass
       if (!validacion()) {
         // asign de correct row
-        if (this.father) {
-          this.row = this.$store.state.personas[this.father].row + 1
+        if (app.father) {
+          app.row = app.$store.state.personas[app.father].row + 1
         }
-        if (this.mother) {
-          this.row = this.$store.state.personas[this.mother].row + 1
+        if (app.mother) {
+          app.row = app.$store.state.personas[app.mother].row + 1
         }
         // format de the timestamp for firestore
-        if (this.b_day_p) {
-          this.b_day = new Date(this.b_day_p + 'T00:00:01.0Z')
+        if (app.b_day_p) {
+          app.b_day = new Date(app.b_day_p + 'T00:00:01.0Z')
         }
-        if (this.d_day_p) {
-          this.d_day = new Date(this.d_day_p + 'T00:00:01.0Z')
+        if (app.d_day_p) {
+          app.d_day = new Date(app.d_day_p + 'T00:00:01.0Z')
         }
 
         // send data
@@ -431,27 +433,26 @@ export default {
       // functions
       // fn send data
       function enviarDatos () {
-        this.dataBase.add({
-          name: this.name,
-          nickname: this.nk_name,
-          row: this.row,
-          sex: this.sex,
-          bio: this.bio,
-          img: this.image,
+        app.dataBase.add({
+          name: app.name,
+          nickname: app.nk_name,
+          row: app.row,
+          sex: app.sex,
+          bio: app.bio,
+          img: app.image,
           conections: {
-            father: this.father,
-            mother: this.mother,
-            spouse: this.spouse
+            father: app.father,
+            mother: app.mother,
+            spouse: app.spouse
           },
           dates: {
-            birth: this.b_day,
-            dead: this.d_day
+            birth: app.b_day,
+            dead: app.d_day
           }
         })
           .then(function (docRef) {
-            // TODO PONER MENSAGE DE "GUARDADO" EN LA VISA
             console.log('Document written with ID: ', docRef.id)
-            this.$router.go(-1)
+            app.$router.go(-1)
           })
           .catch(function (error) {
             console.error('Error adding document: ', error)
@@ -460,16 +461,16 @@ export default {
       // fn validation
       function validacion () {
         let feedBack = ''
-        if (!this.name) {
+        if (!app.name) {
           feedBack = 'El nombre es un campo obligatorio<br>'
         }
-        if (!this.nk_name) {
+        if (!app.nk_name) {
           feedBack = feedBack + 'El apodo es un campo obligatorio<br>'
         }
-        if (!this.sex) {
+        if (!app.sex) {
           feedBack = feedBack + 'El sexo es un campo obligatorio<br>'
         }
-        if (!this.father && !this.mother) {
+        if (!app.father && !app.mother) {
           feedBack = feedBack + 'Seleccione uno de los padres<br>'
         }
         if (feedBack === '') {
@@ -480,6 +481,7 @@ export default {
     }
   },
   computed: {
+
     people () {
       return this.$store.state.personas
     },
@@ -491,36 +493,46 @@ export default {
     },
     dataBase () {
       return this.$store.state.db.collection('people')
+    },
+    firebase () {
+      return this.$store.state.firebase
     }
   },
   created () {
+    console.log('created')
     this.stateValidation()
     this.pausePanZoom()
+    console.log('-------')
   },
   updated () {
+    console.log('updated')
     this.stateValidation()
+    console.log('-------')
   },
+
   // beforeRouteEnter (to, from, next) {
   //   // called before the route that renders this component is confirmed.
   //   // does NOT have access to `this` component instance,
-  // // because it has not been created yet when this guard is called!
-  // // next(vm => {
-  // // // access to component instance via `vm`
-  // // console.log(vm.$store.state.session.login);
+  //  // because it has not been created yet when this guard is called!
+  //  // next(vm => {
+  //  //   // access to component instance via `vm`
+  //  //   console.log(vm.$store.state.session.login);
       
-  // //   if (vm.$store.state.session.login) {
-  // //     next()
-  // //   } else {
-  // //     next("/m/login")
-  // //   }
-  // // })
+  //  //   if (vm.$store.state.session.login) {
+  //  //   next()
+  //  //   } else {
+  //  //   next("/m/login")
+  //  //   }
+  //  // })
     
   // },
   beforeRouteUpdate (to, from, next) {
     // react to route changes...
     // don't forget to call next()
     next()
+    console.log('beforeRouteUpdate')
     this.stateValidation()
+    console.log('-------')
   }
   
 }
@@ -533,78 +545,19 @@ export default {
   align-items: center
   flex-direction: row-reverse
 
-.image__selection
-  display: flex
-  justify-content: space-around
-  margin-bottom: 15px
-  .input-file
-    margin-right: 15px
-
-.input-file__label
-  margin-bottom: 10px
-
-.input-file
-  position: relative
-  // width: 150px
-
-.input-file-input
-  +position(absolute, 0 null null 0)
-  width: 100%
-  opacity: 0
-  pointer-events: none
-
-.input-file-label
-  display: block
-  padding: 10px 20px
-  text-align: center
-  background-color: $action-color
-  color: $button-text-color
-  transition: all $base-duration $base-timing
-  border-radius: $base-border-radius
-  cursor: pointer
-  margin-bottom: 10px
-
-  &:hover, &:focus
-    background-color: $link-hover-color
-    color: $white
-
-.file-return
-  margin: 0
-  margin-bottom: 10px
-  font-style: italic
-  font-size: .9rem
-
-  br
-    line-height: 1em
-
-.new-image
-  width: 170px
-  height: 130px
-  background-position: center
-  background-size: cover
-  background-color: $lightest-gray
-  border-radius: 15px
-  box-shadow: $base-box-shadow
-
 .input-ctnr
-  display: flex
-  align-items: center
-  position: relative
-  flex-direction: row-reverse
-  // justify-content: flex-end
-  margin-bottom: 15px
-  font-size: 1rem
-  line-height: 1em
+  margin-bottom: 10px
+
+  input[type="checkbox"]
+    margin-bottom: 5px
 
   input[type="text"], input[type='date'], select, textarea
-    // border: none
     box-shadow: none
     border-radius: 0
-    margin: 0
+    margin-bottom: 0
     line-height: inherit
 
     &:focus
-
       & ~ label
         color: $color-secundario
         &:after

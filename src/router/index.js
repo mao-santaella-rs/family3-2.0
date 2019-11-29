@@ -6,8 +6,12 @@ Vue.use(Router)
 export default new Router({
   routes: [
     {
-      path: '/',
-      name: 'Home',
+      path: '/*',
+      redirect: { name: 'tree' }
+    },
+    {
+      path: '/tree',
+      name: 'tree',
       component: () => import(/* webpackChunkName: "home" */ '../views/Home.vue'),
       children: [
         {
@@ -32,8 +36,8 @@ export default new Router({
             {
               path: 'edit/:id',
               name: 'edit',
-              component: () => import(/* webpackChunkName: "addedit" */ '../components/AddEdit.vue'),
-              props: true
+              props: true,
+              component: () => import(/* webpackChunkName: "addedit" */ '../components/AddEdit.vue')
             }
           ]
         }

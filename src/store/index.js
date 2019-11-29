@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
-import { firestore, auth } from '../firebase'
+import { firestore, auth, storage } from '../firebase'
 
 Vue.use(Vuex)
 
@@ -8,6 +8,7 @@ export default new Vuex.Store({
   state: {
     db: firestore,
     auth: auth,
+    storage: storage,
     people: null,
     familyTree: {},
     lines: null,

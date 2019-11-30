@@ -1,16 +1,9 @@
 <template lang="pug">
 #modal.modal
-  router-link.modal__background(
-    to="/"
-    @click.native="resumePanZoom"
-  )
+  router-link.modal__background(to="/")
   .modal__window
-    router-link.modal__close(
-      to="/"
-      @click.native="resumePanZoom"
-    )
+    router-link.modal__close(to="/")
       img(src="../assets/icons/cancel.svg")
-
     .modal__content
       router-view
 
@@ -19,17 +12,11 @@
 <script>
 export default {
   name: 'Modal',
-  data () {
-    return {
-    }
+  mounted () {
+    this.$store.dispatch('panZoomChange', false)
   },
-  methods: {
-    pausePanZoom () {
-      this.$store.dispatch('panZoomChange', false)
-    },
-    resumePanZoom () {
-      this.$store.dispatch('panZoomChange', true)
-    }
+  beforeDestroy () {
+    this.$store.dispatch('panZoomChange', true)
   }
 }
 </script>

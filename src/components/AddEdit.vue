@@ -115,7 +115,10 @@
     .col-md-6
       .input-ctnr
         label Select image
-        new-image
+        new-image(
+          :image="image"
+          @get-blob="saveImageBlob"
+        )
 
     .col-12(v-if="feedback")
       p(v-html="feedback")
@@ -123,16 +126,16 @@
     .col-12.form-action
       button(
         v-if="$route.name == 'edit'"
-        @click.prevent="updateData(),pausePanZoom()"
+        @click.prevent="updateData()"
       ) Update
 
       button(
         v-else
-        @click.prevent="addData(),pausePanZoom()"
+        @click.prevent="addData()"
       ) Add
 
       a.lnk.lnk-delete(
-        @click.prevent="deleteData(),pausePanZoom()"
+        @click.prevent="deleteData()"
         href
         v-if="$route.name == 'edit'"
         title="Delete"
@@ -164,138 +167,42 @@ export default {
       row: null,
       dead: false,
       feedback: false,
-      feedback_text: null,
-      app_update: false,
 
-      selected_img: null,
-      image_saved: null,
-      img_obj: null
+      imgBlob: {}
     }
   },
-  watch: {
+  mounted () {
+    this.loadData()
   },
   methods: {
-    pausePanZoom () {
-      console.log('Pause PanZoom')
-      this.$store.dispatch('panZoomChange', false)
-    },
-    resumePanZoom () {
-      console.log('Resume PanZoom')
-      this.$store.dispatch('panZoomChange', true)
-    },
-    selectFile (event) {
-      let app = this
-      let file = event.target.files[0]
-      app.selected_img = file.name
-
-      var fr = new FileReader()
-
-      fr.onload = function (e) { 
-        console.log(e.target.result)
-        app.image = e.target.result
-        app.img_obj = file
-      }
-
-      fr.readAsDataURL(file)
-    },
-    processFile () {
-      let app = this
-      let name = app.name.replace(/\s+/g, '-').toLowerCase()
-      let re = /(?:\.([^.]+))?$/
-      let ext = re.exec(app.img_obj.name)[1]
-      console.log(ext)
-
-      let storageRef = app.firebase.storage().ref()
-
-      var imageRef = storageRef.child('photos/' + name + '.' + ext)
-
-      let task = imageRef.put(app.img_obj)
-
-      task.on('state_changed',
-        snapshot => {
-          var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-          
-          console.log('Upload is ' + progress + '% done')
-        }, 
-        error => {
-          switch (error.code) {
-            // User doesn't have permission to access the object
-            case 'storage/unauthorized': break
-
-            // User canceled the upload
-            case 'storage/canceled': break
-
-            // Unknown error occurred, inspect error.serverResponse
-            case 'storage/unknown': break
-          }
-        },
-        () => {
-          // Upload completed successfully, now we can get the download URL
-          task.snapshot.ref.getDownloadURL()
-            .then(downloadURL => {
-              console.log('File available at', downloadURL)
-              app.image_saved = true
-              app.image = downloadURL
-            })
-        })
-    },
-    stateValidation () {
-      let app = this
-      // if the computed property people is ready
-      if (app.people) {
-        // check if is already updated
-        if (!app.app_update) {
-          // If the route.name is edit and If there is an id in the route params
-          if (app.$route.name === 'edit' && app.$route.params.id) {
-            app.loadData()
-          }
-          // prevent re-update
-          app.app_update = true
-        }
-      }
-    },
-    genderSel (gender) {
-      let app = this
-      let people = app.people
-      let objP = {}
-      for (var key in people) {
-        if (people.hasOwnProperty(key)) {
-          if (people[key].sex === gender) {
-            objP[key] = app.people[key]
-          }
-        }
-      }
-      return objP
+    saveImageBlob (blob) {
+      this.imgBlob = blob
     },
     loadData () {
-      let app = this
-      let people = app.people
-      let routeId = app.$route.params.id
-      let person = people[routeId]
+      const person = this.people[this.$route.params.id]
 
-      app.name = person.name
-      app.nk_name = person.nickname
-      app.sex = person.sex
-      app.mother = person.conections.mother
-      app.father = person.conections.father
-      app.spouse = person.conections.spouse
-      app.image = person.img
+      this.name = person.name
+      this.nk_name = person.nickname
+      this.sex = person.sex
+      this.mother = person.conections.mother
+      this.father = person.conections.father
+      this.spouse = person.conections.spouse
+      this.image = person.img
       
-      app.bio = person.bio
-      app.row = person.row
+      this.bio = person.bio
+      this.row = person.row
 
       if (person.dates.birth) {
-        app.b_day_p = dateTransform(person.dates.birth)
+        this.b_day_p = dateTransform(person.dates.birth)
       } else {
-        app.b_day_p = ''
+        this.b_day_p = ''
       }
       
-      // console.log("dead: " + person.dates.dead)
       if (person.dates.dead) {
-        app.d_day_p = dateTransform(person.dates.dead)
-        app.dead = true
+        this.d_day_p = dateTransform(person.dates.dead)
+        this.dead = true
       } else {
-        app.dead = false
+        this.dead = false
       }
       
       function dateTransform (timestamp) {
@@ -314,56 +221,84 @@ export default {
         return time
       }
     },
-    updateData () {
-      let app = this
-      let routeId = app.$route.params.id
-      let dbPersonas = app.people
-      // console.log("update data");
+    uploadImage () {
+      if (!('name' in this.imgBlob)) return
 
-      app.feedback = validacion()
+      const name = this.name.replace(/\s+/g, '-').toLowerCase()
+      const re = /(?:\.([^.]+))?$/
+      const ext = re.exec(this.imgBlob.name)[1]
+      
+      const task = this.storage
+        .child(`photos/${name}.${ext}`)
+        .put(this.imgBlob)
+
+      task.on('state_changed',
+        snapshot => {
+          var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+          console.log('Upload is ' + progress + '% done')
+        }, 
+        error => {
+          switch (error.code) {
+            // User doesn't have permission to access the object
+            case 'storage/unauthorized': break
+            // User canceled the upload
+            case 'storage/canceled': break
+            // Unknown error occurred, inspect error.serverResponse
+            case 'storage/unknown': break
+          }
+        },
+        () => {
+          // Upload completed successfully, now we can get the download URL
+          task.snapshot.ref.getDownloadURL()
+            .then(downloadURL => {
+              console.log('File available at', downloadURL)
+              this.image = downloadURL
+            })
+        })
+    },
+    updateData () {
+      let personId = this.$route.params.id
+
+      this.feedback = validacion()
 
       if (!validacion()) {
-        // console.log("ya esta validado");
-        
-        if (app.father !== dbPersonas[routeId].conections.father) {
-          app.row = dbPersonas[app.father].row + 1
+        if (this.father !== this.people[personId].conections.father) {
+          this.row = this.people[this.father].row + 1
         }
-        if (app.mother !== dbPersonas[routeId].conections.mother) {
-          app.row = dbPersonas[app.mother].row + 1
+        if (this.mother !== this.people[personId].conections.mother) {
+          this.row = this.people[this.mother].row + 1
         }
-        if (app.b_day_p) {
-          app.b_day = new Date(app.b_day_p + 'T00:00:01.0Z')
+        if (this.b_day_p) {
+          this.b_day = new Date(this.b_day_p + 'T00:00:01.0Z')
         }
-        if (app.d_day_p) {
-          app.d_day = new Date(app.d_day_p + 'T00:00:01.0Z')
+        if (this.d_day_p) {
+          this.d_day = new Date(this.d_day_p + 'T00:00:01.0Z')
         }
-
         actualizarDatos()
       }
 
       function actualizarDatos () {
         console.log('actualizando datos')
-
-        app.dataBase.doc(routeId).update({
-          name: app.name,
-          nickname: app.nk_name,
-          row: app.row,
-          sex: app.sex,
-          bio: app.bio,
-          img: app.image,
+        this.dataBase.doc(personId).update({
+          name: this.name,
+          nickname: this.nk_name,
+          row: this.row,
+          sex: this.sex,
+          bio: this.bio,
+          img: this.image,
           conections: {
-            father: app.father,
-            mother: app.mother,
-            spouse: app.spouse
+            father: this.father,
+            mother: this.mother,
+            spouse: this.spouse
           },
           dates: {
-            birth: app.b_day,
-            dead: app.d_day
+            birth: this.b_day,
+            dead: this.d_day
           }
         })
           .then(function (docRef) {
             console.log('Se guardo Correctamente')
-            app.$router.go(-1)
+            this.$router.go(-1)
           })
           .catch(function (error) {
             console.error('Error adding document: ', error)
@@ -372,10 +307,10 @@ export default {
 
       function validacion () {
         let feedBack = ''
-        if (!app.name) {
+        if (!this.name) {
           feedBack = 'El nombre es un campo obligatorio<br>'
         }
-        if (!app.nk_name) {
+        if (!this.nk_name) {
           feedBack = feedBack + 'El apodo es un campo obligatorio<br>'
         }
         if (feedBack === '') {
@@ -385,45 +320,43 @@ export default {
       }
     },
     deleteData () {
-      let app = this
-      let routeId = app.$route.params.id
-      let dbPersonas = app.people
+      let routeId = this.$route.params.id
+      let dbPersonas = this.people
       // confirm troug confirm dialog
       var confirmation = confirm('Do you want to delete' + dbPersonas[routeId].name)
       if (confirmation) {
-        app.dataBase.doc(routeId).delete()
+        this.dataBase.doc(routeId).delete()
           .then(() => {
             console.log('Document successfully deleted!')
-            app.$store.dispatch('getData')
-            app.$router.go(-1)
+            this.$store.dispatch('getData')
+            this.$router.go(-1)
           }).catch(error => {
             console.error('Error removing document: ', error)
           })
       } else {
-        app.feedBack = 'You pressed Cancel!'
+        this.feedBack = 'You pressed Cancel!'
       }
     },
     addData () {
-      let app = this
-      app.feedback = null
+      this.feedback = null
       
-      app.feedback = validacion()
+      this.feedback = validacion()
 
       // if validation pass
       if (!validacion()) {
         // asign de correct row
-        if (app.father) {
-          app.row = app.$store.state.personas[app.father].row + 1
+        if (this.father) {
+          this.row = this.$store.state.personas[this.father].row + 1
         }
-        if (app.mother) {
-          app.row = app.$store.state.personas[app.mother].row + 1
+        if (this.mother) {
+          this.row = this.$store.state.personas[this.mother].row + 1
         }
         // format de the timestamp for firestore
-        if (app.b_day_p) {
-          app.b_day = new Date(app.b_day_p + 'T00:00:01.0Z')
+        if (this.b_day_p) {
+          this.b_day = new Date(this.b_day_p + 'T00:00:01.0Z')
         }
-        if (app.d_day_p) {
-          app.d_day = new Date(app.d_day_p + 'T00:00:01.0Z')
+        if (this.d_day_p) {
+          this.d_day = new Date(this.d_day_p + 'T00:00:01.0Z')
         }
 
         // send data
@@ -433,26 +366,26 @@ export default {
       // functions
       // fn send data
       function enviarDatos () {
-        app.dataBase.add({
-          name: app.name,
-          nickname: app.nk_name,
-          row: app.row,
-          sex: app.sex,
-          bio: app.bio,
-          img: app.image,
+        this.dataBase.add({
+          name: this.name,
+          nickname: this.nk_name,
+          row: this.row,
+          sex: this.sex,
+          bio: this.bio,
+          img: this.image,
           conections: {
-            father: app.father,
-            mother: app.mother,
-            spouse: app.spouse
+            father: this.father,
+            mother: this.mother,
+            spouse: this.spouse
           },
           dates: {
-            birth: app.b_day,
-            dead: app.d_day
+            birth: this.b_day,
+            dead: this.d_day
           }
         })
           .then(function (docRef) {
             console.log('Document written with ID: ', docRef.id)
-            app.$router.go(-1)
+            this.$router.go(-1)
           })
           .catch(function (error) {
             console.error('Error adding document: ', error)
@@ -461,16 +394,16 @@ export default {
       // fn validation
       function validacion () {
         let feedBack = ''
-        if (!app.name) {
+        if (!this.name) {
           feedBack = 'El nombre es un campo obligatorio<br>'
         }
-        if (!app.nk_name) {
+        if (!this.nk_name) {
           feedBack = feedBack + 'El apodo es un campo obligatorio<br>'
         }
-        if (!app.sex) {
+        if (!this.sex) {
           feedBack = feedBack + 'El sexo es un campo obligatorio<br>'
         }
-        if (!app.father && !app.mother) {
+        if (!this.father && !this.mother) {
           feedBack = feedBack + 'Seleccione uno de los padres<br>'
         }
         if (feedBack === '') {
@@ -481,9 +414,8 @@ export default {
     }
   },
   computed: {
-
     people () {
-      return this.$store.state.personas
+      return this.$store.state.people
     },
     masculine () {
       return this.$store.getters.genderSel('m')
@@ -494,47 +426,10 @@ export default {
     dataBase () {
       return this.$store.state.db.collection('people')
     },
-    firebase () {
-      return this.$store.state.firebase
+    storage () {
+      return this.$store.state.storage
     }
-  },
-  created () {
-    console.log('created')
-    this.stateValidation()
-    this.pausePanZoom()
-    console.log('-------')
-  },
-  updated () {
-    console.log('updated')
-    this.stateValidation()
-    console.log('-------')
-  },
-
-  // beforeRouteEnter (to, from, next) {
-  //   // called before the route that renders this component is confirmed.
-  //   // does NOT have access to `this` component instance,
-  //  // because it has not been created yet when this guard is called!
-  //  // next(vm => {
-  //  //   // access to component instance via `vm`
-  //  //   console.log(vm.$store.state.session.login);
-      
-  //  //   if (vm.$store.state.session.login) {
-  //  //   next()
-  //  //   } else {
-  //  //   next("/m/login")
-  //  //   }
-  //  // })
-    
-  // },
-  beforeRouteUpdate (to, from, next) {
-    // react to route changes...
-    // don't forget to call next()
-    next()
-    console.log('beforeRouteUpdate')
-    this.stateValidation()
-    console.log('-------')
   }
-  
 }
 </script>
 

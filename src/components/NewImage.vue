@@ -1,7 +1,7 @@
 <template lang="pug">
 .new-img
   .row
-    .col-6
+    .col
       .input-file
         input#my-file.input-file-input(
           type="file"
@@ -14,14 +14,9 @@
         br 
         | {{imgName}}
 
-    .col-6
+    .col
       .new-image(
-        v-if="imgProcessed.length"
-        :style="{'background-image': `url(${imgProcessed})`}"
-      )
-      .new-image(
-        v-else
-        :style="{'background-image': `url(${image})`}"
+        :style="{'background-image': `url(${imgProcessed.length ? imgProcessed : image})`}"
       )
 
 </template>

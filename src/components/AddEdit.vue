@@ -14,32 +14,27 @@
     .col-md-6
       .input-ctnr
         label Sex:
-
-        .form-check.form-check-inline
-          input#form-sex-m.form-check-input(
-            type='radio'
-            name='formsex'
-            v-model="sex"
-            value='m'
-          )
-          label.form-check-label(for='form-sex-m') M
-
-        .form-check.form-check-inline
-          input#form-sex-f.form-check-input(
-            type='radio'
-            name='formsex'
-            v-model="sex"
-            value='f'
-          )
-          label.form-check-label(for='form-sex-f') F
+        select#form-spouse(v-model="sex")
+          option(value="m") Masculine
+          option(value="f") Feminine
 
     .col-md-6
       .input-ctnr
         label(for='form-nickname') Nick Name
         input#form-nickname(
           type='text'
-          v-model="nk_name"
+          v-model="nickName"
         )
+    
+    .col-md-6
+      .input-ctnr
+        label(for='form-spouse') Spouse
+        select#form-spouse(v-model="spouse")
+          option(
+            v-for="(person,key,index) in people"
+            :key="index + key"
+            :value="key"
+          ) {{person.name}}
 
     .col-md-6
       .input-ctnr
@@ -60,49 +55,66 @@
             :key="key + index"
             :value="key"
           ) {{person.name}}
-    
-    .col-md-6
-      .input-ctnr
-        label(for='form-spouse') Spouse
-        select#form-spouse(v-model="spouse")
-          option(
-            v-for="(person,key,index) in people"
-            :key="index + key"
-            :value="key"
-          ) {{person.name}}
-
-      //- .input-ctnr
-        label(for='form-img') Image Url
-        input#form-img(type='text',v-model="image")
 
     .col-md-6
-
       .input-ctnr
-        label(for='form-birth') Birth Day
-        input#form-birth(
-          type='date'
-          v-model="b_day_p"
-          placeholder="yyyy-mm-dd"
-        )
+        label Birth Day
+        .input-date
+          select(v-model="birthDateObj.day")
+            option(selected data-default :value="0") Day
+            option(
+              v-for="number in dateSetUp.day" 
+              :key="'day-'+number"
+              :value="number"
+            ) {{number}}
+          select(v-model="birthDateObj.month")
+            option(selected data-default :value="0") Month
+            option(
+              v-for="(month,index) in dateSetUp.month" 
+              :key="'day-'+month"
+              :value="index"
+            ) {{month}}
+          select(v-model="birthDateObj.year")
+            option(selected data-default :value="0") Year
+            option(
+              v-for="number in dateSetUp.year" 
+              :key="'day-'+number"
+              :value="2019 - number"
+            ) {{2019 - number}}
 
     .col-md-6
       .input-ctnr
         .form-check.form-check-inline
           input#form-dead-q.form-check-input(
             type='checkbox'
-            value='true'
-            v-model="dead"
+            v-model="deadDateObj.isDead"
           )
           label(for='form-dead-q') 
             span Deceased 
             span(v-if="dead") date
-
-        input#form-dead(
-          v-if="dead"
-          type='date'
-          v-model="d_day_p"
-          placeholder="yyyy-mm-dd"
-        )
+        
+        .input-date(v-if="deadDateObj.isDead")
+          select(v-model="deadDateObj.day")
+            option(selected data-default value="") Day
+            option(
+              v-for="number in dateSetUp.day" 
+              :key="'day-'+number"
+              :value="number"
+            ) {{number}}
+          select(v-model="deadDateObj.month")
+            option(selected data-default value="") Month
+            option(
+              v-for="(month,index) in dateSetUp.month" 
+              :key="'day-'+month"
+              :value="index"
+            ) {{month}}
+          select(v-model="deadDateObj.year")
+            option(selected data-default value="") Year
+            option(
+              v-for="number in dateSetUp.year" 
+              :key="'day-'+number"
+              :value="2019 - number"
+            ) {{2019 - number}}
     
     .col-md-6
       .input-ctnr
@@ -126,16 +138,16 @@
     .col-12.form-action
       button(
         v-if="$route.name == 'edit'"
-        @click.prevent="updateData()"
+        @click.prevent="updateData"
       ) Update
 
       button(
         v-else
-        @click.prevent="addData()"
+        @click.prevent="addData"
       ) Add
 
       a.lnk.lnk-delete(
-        @click.prevent="deleteData()"
+        @click.prevent="deleteData"
         href
         v-if="$route.name == 'edit'"
         title="Delete"
@@ -144,6 +156,9 @@
 </template>
 
 <script>
+import {
+  format as dateFormat
+} from 'date-fns'
 import NewImage from './NewImage'
 export default {
   name: 'AddEdit',
@@ -152,27 +167,47 @@ export default {
   },
   data () {
     return {
-      name: null,
-      nk_name: null,
-      sex: null,
-      mother: null,
-      father: null,
-      spouse: null,
-      image: null,
-      d_day: null,
-      d_day_p: null,
-      b_day: null,
-      b_day_p: null,
-      bio: null,
-      row: null,
-      dead: false,
-      feedback: false,
+      name: '',
+      nickName: '',
+      sex: '',
+      mother: '',
+      father: '',
+      spouse: '',
+      image: '',
+      birthDate: null,
+      deadDate: null,
+      bio: '',
+      row: '',
 
+      birthDateObj: {
+        day: null,
+        month: null,
+        year: null
+      },
+      deadDateObj: {
+        isDead: false,
+        day: null,
+        month: null,
+        year: null
+      },
+      dateSetUp: {
+        day: 31,
+        month: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+        year: 100
+      },
+      dead: false,
+      birthDateView: null,
+      deadDateView: null,
+      feedback: false,
       imgBlob: {}
     }
   },
   mounted () {
-    this.loadData()
+    if (this.$route.name === 'edit') {
+      this.loadData()
+    }
+    // let mao = new Date('2019/11/20').setHours(0, 0, 0, 0)
+    // console.log(dateFormat(mao, 'yyyy MM dd HH:mm:ss'), mao)
   },
   methods: {
     saveImageBlob (blob) {
@@ -182,7 +217,7 @@ export default {
       const person = this.people[this.$route.params.id]
 
       this.name = person.name
-      this.nk_name = person.nickname
+      this.nickName = person.nickname
       this.sex = person.sex
       this.mother = person.conections.mother
       this.father = person.conections.father
@@ -192,14 +227,28 @@ export default {
       this.bio = person.bio
       this.row = person.row
 
-      if (person.dates.birth) {
-        this.b_day_p = dateTransform(person.dates.birth)
+      if (typeof person.dates.birth === 'object') {
+        const dbDate = new Date(dateTransform(person.dates.birth))
+        this.birthDateObj.day = Number(dateFormat(dbDate, 'dd'))
+        this.birthDateObj.month = Number(dateFormat(dbDate, 'M')) - 1
+        this.birthDateObj.year = Number(dateFormat(dbDate, 'yyyy'))
+
+        console.log(typeof person.dates.birth)
+        
+        // const newBday = new Date(this.birthDateObj.year, this.birthDateObj.month, this.birthDateObj.day)
+        // const newBdayStr = dateFormat(newBday, 'yyyy MM dd HH:mm:ss')
+        // console.log(newBdayStr)
       } else {
-        this.b_day_p = ''
+        const dbDate = new Date(person.dates.birth)
+        this.birthDateObj.day = Number(dateFormat(dbDate, 'dd'))
+        this.birthDateObj.month = Number(dateFormat(dbDate, 'M'))
+        this.birthDateObj.year = Number(dateFormat(dbDate, 'yyyy'))
       }
+
+      // console.log(dateFormat(new Date(0).setUTCSeconds(person.dates.birth.seconds), 'yyyy MM dd HH:mm:ss'))
       
       if (person.dates.dead) {
-        this.d_day_p = dateTransform(person.dates.dead)
+        this.deadDateView = dateTransform(person.dates.dead)
         this.dead = true
       } else {
         this.dead = false
@@ -268,11 +317,11 @@ export default {
         if (this.mother !== this.people[personId].conections.mother) {
           this.row = this.people[this.mother].row + 1
         }
-        if (this.b_day_p) {
-          this.b_day = new Date(this.b_day_p + 'T00:00:01.0Z')
+        if (this.birthDateView) {
+          this.birthDate = new Date(this.birthDateView).setHours(0, 0, 0, 0)
         }
-        if (this.d_day_p) {
-          this.d_day = new Date(this.d_day_p + 'T00:00:01.0Z')
+        if (this.deadDateView) {
+          this.deadDate = new Date(this.deadDateView).setHours(0, 0, 0, 0)
         }
         actualizarDatos()
       }
@@ -281,7 +330,7 @@ export default {
         console.log('actualizando datos')
         this.dataBase.doc(personId).update({
           name: this.name,
-          nickname: this.nk_name,
+          nickname: this.nickName,
           row: this.row,
           sex: this.sex,
           bio: this.bio,
@@ -292,8 +341,8 @@ export default {
             spouse: this.spouse
           },
           dates: {
-            birth: this.b_day,
-            dead: this.d_day
+            birth: this.birthDate,
+            dead: this.deadDate
           }
         })
           .then(function (docRef) {
@@ -310,7 +359,7 @@ export default {
         if (!this.name) {
           feedBack = 'El nombre es un campo obligatorio<br>'
         }
-        if (!this.nk_name) {
+        if (!this.nickName) {
           feedBack = feedBack + 'El apodo es un campo obligatorio<br>'
         }
         if (feedBack === '') {
@@ -338,80 +387,66 @@ export default {
       }
     },
     addData () {
-      this.feedback = null
-      
-      this.feedback = validacion()
+      this.feedback = this.formValidation()
 
-      // if validation pass
-      if (!validacion()) {
-        // asign de correct row
-        if (this.father) {
-          this.row = this.$store.state.personas[this.father].row + 1
-        }
-        if (this.mother) {
-          this.row = this.$store.state.personas[this.mother].row + 1
-        }
-        // format de the timestamp for firestore
-        if (this.b_day_p) {
-          this.b_day = new Date(this.b_day_p + 'T00:00:01.0Z')
-        }
-        if (this.d_day_p) {
-          this.d_day = new Date(this.d_day_p + 'T00:00:01.0Z')
-        }
+      if (this.feedBack.length) return
 
-        // send data
-        enviarDatos()
+      if (this.father.length) {
+        this.row = this.people[this.father].row + 1
       }
-
-      // functions
-      // fn send data
-      function enviarDatos () {
-        this.dataBase.add({
-          name: this.name,
-          nickname: this.nk_name,
-          row: this.row,
-          sex: this.sex,
-          bio: this.bio,
-          img: this.image,
-          conections: {
-            father: this.father,
-            mother: this.mother,
-            spouse: this.spouse
-          },
-          dates: {
-            birth: this.b_day,
-            dead: this.d_day
-          }
+      if (this.mother.length) {
+        this.row = this.people[this.mother].row + 1
+      }
+      // send data
+      this.dataBase.add({
+        name: this.name,
+        nickname: this.nickName,
+        row: this.row,
+        sex: this.sex,
+        bio: this.bio,
+        img: this.image,
+        conections: {
+          father: this.father,
+          mother: this.mother,
+          spouse: this.spouse
+        },
+        dates: {
+          birth: dateFormat(new Date(this.birthDateObj.year, this.birthDateObj.month, this.birthDateObj.day), 'yyyy MM dd HH:mm:ss'),
+          dead: dateFormat(new Date(this.deadDateObj.year, this.deadDateObj.month, this.deadDateObj.day), 'yyyy MM dd HH:mm:ss')
+        }
+      })
+        .then(docRef => {
+          console.log('Document written with ID: ', docRef.id)
+          this.$router.go(-1)
         })
-          .then(function (docRef) {
-            console.log('Document written with ID: ', docRef.id)
-            this.$router.go(-1)
-          })
-          .catch(function (error) {
-            console.error('Error adding document: ', error)
-          })
+        .catch(error => {
+          console.error('Error adding document: ', error)
+        })
+    },
+    formValidation () {
+      let feedBack = []
+      if (this.name.length < 1) {
+        feedBack.push('Name is required')
       }
-      // fn validation
-      function validacion () {
-        let feedBack = ''
-        if (!this.name) {
-          feedBack = 'El nombre es un campo obligatorio<br>'
-        }
-        if (!this.nk_name) {
-          feedBack = feedBack + 'El apodo es un campo obligatorio<br>'
-        }
-        if (!this.sex) {
-          feedBack = feedBack + 'El sexo es un campo obligatorio<br>'
-        }
-        if (!this.father && !this.mother) {
-          feedBack = feedBack + 'Seleccione uno de los padres<br>'
-        }
-        if (feedBack === '') {
-          feedBack = null
-        }
-        return feedBack
+      if (this.nickName.length < 1) {
+        feedBack.push('Nick Name is required')
       }
-    }
+      if (this.sex.length < 1) {
+        feedBack.push('Sex is required')
+      }
+      if (this.father.length < 1 && this.mother.length < 1) {
+        feedBack.push('select one of the parents')
+      }
+      if (this.birthDateObj.day === null && this.birthDateObj.month === null && this.birthDateObj.year === null) {
+        feedBack.push('select a correct birthday')
+      }
+      if (this.deadDateObj.isDead) {
+        if (this.deadDateObj.day === null && this.deadDateObj.month === null && this.deadDateObj.year === null) {
+          feedBack.push('select a correct dead date')
+        }
+      }
+      return feedBack
+    } 
   },
   computed: {
     people () {
@@ -489,5 +524,10 @@ export default {
         &:before
           background-color: $color-secundario
           opacity: 1
-      
+.input-date
+  display: flex
+  select
+    margin-right: 10px
+    &:last-child
+      margin-right: 0
 </style>

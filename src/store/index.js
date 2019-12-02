@@ -233,6 +233,9 @@ export default new Vuex.Store({
     }
   },
   getters: {
+    getPersonById: state => id => {
+      return state.people[id]
+    },
     genderSel: state => gender => {
       let people = state.people
       let objP = {}

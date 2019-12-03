@@ -5,8 +5,9 @@
 
       FamilyNode(
         v-if="Object.keys(familyTree).length > 0"
-        :datos='familyTree'
-        :personas="people"
+        :family-obj='familyTree'
+        :people="people"
+        :login="login"
         @centerPanZoom="centerPanZoom"
       )
     
@@ -37,7 +38,8 @@ export default {
   data () {
     return {
       panZoom: null,
-      initialPanZoom: null
+      initialPanZoom: null,
+      peopleCount: 0
     }
   },
   mounted () {
@@ -46,6 +48,8 @@ export default {
       minZoom: 0.1
     })
     this.initialPanZoom = this.panZoom.getTransform()
+    this.$root.$on('person-rendered', this.personRendered)
+    this.$root.$on('make-lines', this.makeLines)
   },
   watch: {
     storePanZoom () {
@@ -65,19 +69,87 @@ export default {
     },
     storePanZoom () {
       return this.$store.state.panZoom
+    },
+    lines () {
+      return this.$store.state.lines
+    },
+    login () {
+      return this.$store.state.session.login
     }
   },
   methods: {
+    personRendered () {
+      this.peopleCount++    
+      if (this.peopleCount === Object.keys(this.people).length) {
+        this.makeLines()
+      }
+    },
+    makeLines () {
+      const svgId = 'linea-1'
+      // old line
+      const $oldLine = document.getElementById(svgId)
+
+      // if there's a old line remove
+      if ($oldLine) $oldLine.remove()
+
+      // line object
+      const $line = document.getElementById('line')
+
+      const svgWidth = $line.offsetWidth
+      const svgHeight = $line.offsetHeight
+
+      // creacion de svg
+      const $svg = fnCreateSvg($line, svgId, svgWidth, svgHeight)
+
+      // loop in $store.lines
+      for (const key in this.lines) {
+        // if $store.lines[key] has data
+        if (this.lines[key]) {            
+          const $lineCords = $line.getBoundingClientRect()
+          // person object and cords
+          const $person = document.querySelector(`.a${key}`)
+          const $personCords = $person.getBoundingClientRect()
+
+          // parent of person object and cords
+          const $parent = document.querySelector(`.${this.lines[key]}`)
+          const $parentCords = $parent.getBoundingClientRect()
+
+          // create line between person and parent
+          createPolyLine($svg, $parentCords.x - $lineCords.x + ($parentCords.width / 2), $parentCords.bottom - $lineCords.y - 10, $personCords.x - $lineCords.x + ($personCords.width / 2), $personCords.y - $lineCords.y + 10)
+        }
+      }
+
+      // CREAR SVG EN EL DOM
+      function fnCreateSvg (csctnr, csid, cswidth, csheight) {
+        const NS = 'http://www.w3.org/2000/svg'
+        const svg = document.createElementNS(NS, 'svg')
+
+        svg.setAttribute('id', csid)
+        svg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink')
+        svg.setAttribute('viewBox', `0 0 ${cswidth} ${csheight}`)
+        
+        csctnr.appendChild(svg)
+        return svg
+      }
+
+      // CREAR POLYLINEA DENTRO DEL SVG
+      function createPolyLine (clctnr, clx1, cly1, clx2, cly2) {
+        const NS = 'http://www.w3.org/2000/svg'
+        const line = document.createElementNS(NS, 'polyline')
+        const hWay = cly2 - 35
+        const cords = `${clx1},${cly1} ${clx1},${hWay} ${clx2},${hWay} ${clx2},${cly2}`
+        line.setAttribute('points', cords)
+        clctnr.appendChild(line)
+      }
+    },
     centerPanZoom () {
       this.panZoom.centerOn(this.$refs.tree)
     },
-    async togglePanZoom () {
+    togglePanZoom () {
       if (this.panZoom.isPaused()) {
         this.resumePanZoom()
-        // this.panZoom.resume()
       } else {
         this.pausePanZoom()
-        // this.panZoom.pause()
       }
     },
     getCords () {

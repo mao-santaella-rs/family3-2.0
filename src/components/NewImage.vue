@@ -16,9 +16,8 @@
 
     .col
       .new-image(
-        :style="{'background-image': `url(${imgProcessed.length ? imgProcessed : image})`}"
+        :style="{'background-image': `url(${finalImg})`}"
       )
-
 </template>
 
 <script>
@@ -40,9 +39,14 @@ export default {
       const fr = new FileReader()
       fr.onload = e => {
         this.imgProcessed = e.target.result
-        this.$emit('get-blob', file)
+        this.$emit('get-imgblob', file)
       }
       fr.readAsDataURL(file)
+    }
+  },
+  computed: {
+    finalImg () {
+      return this.imgProcessed.length ? this.imgProcessed : this.image
     }
   }
 }

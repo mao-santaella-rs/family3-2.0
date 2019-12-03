@@ -176,13 +176,13 @@ export default new Vuex.Store({
   },
   actions: {
     getData: ({ state, commit }) => {
-      let dbObject = {}
       state.db
         .collection('people')
         .orderBy('row')
         .onSnapshot(snapshot => {
-          snapshot.docChanges().forEach(change => {
-            dbObject[change.doc.id] = change.doc.data()
+          let dbObject = {}
+          snapshot.docs.forEach(doc => {
+            dbObject[doc.id] = doc.data()
           })
           commit('storePeopleData', dbObject)
           commit('storeFamilyTreeData', dbObject)

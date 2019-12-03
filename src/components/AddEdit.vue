@@ -40,6 +40,7 @@
       .input-ctnr
         label(for='form-mother') Mother
         select#form-mother(v-model="mother")
+          option(value="") 
           option(
             v-for="(person,key,index) in femenine"
             :key="key + index"
@@ -50,6 +51,7 @@
       .input-ctnr
         label(for='form-father') Father
         select#form-father(v-model="father")
+          option(value="") 
           option(
             v-for="(person,key,index) in masculine"
             :key="key + index"
@@ -68,7 +70,7 @@
               :value="number"
             ) {{number}}
           select(v-model="birthDateObj.month")
-            option(selected data-default :value="0") Month
+            option(selected data-default :value="-1") Month
             option(
               v-for="(month,index) in dateSetUp.month" 
               :key="'day-'+month"
@@ -129,11 +131,15 @@
         label Select image
         new-image(
           :image="image"
-          @get-blob="saveImageBlob"
+          @get-imgblob="blob => {imgBlob = blob}"
         )
 
-    .col-12(v-if="feedback")
-      p(v-html="feedback")
+    .col-12(v-if="feedback.length")
+      .feedback
+        p(
+          v-for="item in feedback"
+          :key="item.replace(/\s+/g,'-').toLowerCase()"
+        ) {{item}}
 
     .col-12.form-action
       button(
@@ -199,197 +205,81 @@ export default {
       birthDateView: null,
       deadDateView: null,
       feedback: false,
-      imgBlob: {}
+      imgBlob: {},
+      imageUploading: 0
     }
   },
   mounted () {
     if (this.$route.name === 'edit') {
       this.loadData()
     }
-    // let mao = new Date('2019/11/20').setHours(0, 0, 0, 0)
-    // console.log(dateFormat(mao, 'yyyy MM dd HH:mm:ss'), mao)
   },
   methods: {
-    saveImageBlob (blob) {
-      this.imgBlob = blob
-    },
     loadData () {
       const person = this.people[this.$route.params.id]
 
-      this.name = person.name
-      this.nickName = person.nickname
-      this.sex = person.sex
-      this.mother = person.conections.mother
-      this.father = person.conections.father
-      this.spouse = person.conections.spouse
-      this.image = person.img
-      
-      this.bio = person.bio
-      this.row = person.row
+      this.name = person.name !== null ? person.name : ''
+      this.nickName = person.nickname !== null ? person.nickname : ''
+      this.sex = person.sex !== null ? person.sex : ''
+      this.mother = person.conections.mother !== null ? person.conections.mother : ''
+      this.father = person.conections.father !== null ? person.conections.father : ''
+      this.spouse = person.conections.spouse !== null ? person.conections.spouse : ''
+      this.image = person.img !== null ? person.img : ''
 
-      if (typeof person.dates.birth === 'object') {
-        const dbDate = new Date(dateTransform(person.dates.birth))
-        this.birthDateObj.day = Number(dateFormat(dbDate, 'dd'))
-        this.birthDateObj.month = Number(dateFormat(dbDate, 'M')) - 1
-        this.birthDateObj.year = Number(dateFormat(dbDate, 'yyyy'))
+      this.bio = person.bio !== null ? person.bio : ''
+      this.row = person.row !== null ? person.row : ''
 
-        console.log(typeof person.dates.birth)
-        
-        // const newBday = new Date(this.birthDateObj.year, this.birthDateObj.month, this.birthDateObj.day)
-        // const newBdayStr = dateFormat(newBday, 'yyyy MM dd HH:mm:ss')
-        // console.log(newBdayStr)
-      } else {
-        const dbDate = new Date(person.dates.birth)
-        this.birthDateObj.day = Number(dateFormat(dbDate, 'dd'))
-        this.birthDateObj.month = Number(dateFormat(dbDate, 'M'))
-        this.birthDateObj.year = Number(dateFormat(dbDate, 'yyyy'))
-      }
-
-      // console.log(dateFormat(new Date(0).setUTCSeconds(person.dates.birth.seconds), 'yyyy MM dd HH:mm:ss'))
+      const dbBirthDate = new Date(person.dates.birth)
+      this.birthDateObj.day = Number(dateFormat(dbBirthDate, 'dd'))
+      this.birthDateObj.month = Number(dateFormat(dbBirthDate, 'M')) - 1
+      this.birthDateObj.year = Number(dateFormat(dbBirthDate, 'yyyy'))
       
-      if (person.dates.dead) {
-        this.deadDateView = dateTransform(person.dates.dead)
-        this.dead = true
-      } else {
-        this.dead = false
-      }
-      
-      function dateTransform (timestamp) {
-        var a = new Date(0)
-        a.setUTCSeconds(timestamp.seconds)
-        var year = a.getUTCFullYear()
-        var month = a.getUTCMonth() + 1
-        if (month < 10) {
-          month = '0' + month
-        }
-        var date = a.getUTCDate()
-        if (date < 10) {
-          date = '0' + date
-        }
-        var time = year + '-' + month + '-' + date
-        return time
+      if (person.dates.dead.length) {
+        this.deadDateObj.isDead = true
+        const dbDeadDate = new Date(person.dates.dead)
+        this.deadDateObj.day = Number(dateFormat(dbDeadDate, 'dd'))
+        this.deadDateObj.month = Number(dateFormat(dbDeadDate, 'M'))
+        this.deadDateObj.year = Number(dateFormat(dbDeadDate, 'yyyy'))
       }
     },
     uploadImage () {
-      if (!('name' in this.imgBlob)) return
+      return new Promise((resolve, reject) => {
+        if (!('name' in this.imgBlob)) resolve('')
 
-      const name = this.name.replace(/\s+/g, '-').toLowerCase()
-      const re = /(?:\.([^.]+))?$/
-      const ext = re.exec(this.imgBlob.name)[1]
-      
-      const task = this.storage
-        .child(`photos/${name}.${ext}`)
-        .put(this.imgBlob)
+        const name = this.name.replace(/\s+/g, '-').toLowerCase()
+        const re = /(?:\.([^.]+))?$/
+        const ext = re.exec(this.imgBlob.name)[1]
+        const task = this.storage
+          .child(`photos/maoma${name}.${ext}`)
+          .put(this.imgBlob)
 
-      task.on('state_changed',
-        snapshot => {
-          var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-          console.log('Upload is ' + progress + '% done')
-        }, 
-        error => {
-          switch (error.code) {
+        task.on('state_changed',
+          snapshot => {
+            this.imageUploading = (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+          }, 
+          error => {
+            reject(error)
+            switch (error.code) {
             // User doesn't have permission to access the object
-            case 'storage/unauthorized': break
-            // User canceled the upload
-            case 'storage/canceled': break
-            // Unknown error occurred, inspect error.serverResponse
-            case 'storage/unknown': break
-          }
-        },
-        () => {
-          // Upload completed successfully, now we can get the download URL
-          task.snapshot.ref.getDownloadURL()
-            .then(downloadURL => {
-              console.log('File available at', downloadURL)
-              this.image = downloadURL
-            })
-        })
-    },
-    updateData () {
-      let personId = this.$route.params.id
-
-      this.feedback = validacion()
-
-      if (!validacion()) {
-        if (this.father !== this.people[personId].conections.father) {
-          this.row = this.people[this.father].row + 1
-        }
-        if (this.mother !== this.people[personId].conections.mother) {
-          this.row = this.people[this.mother].row + 1
-        }
-        if (this.birthDateView) {
-          this.birthDate = new Date(this.birthDateView).setHours(0, 0, 0, 0)
-        }
-        if (this.deadDateView) {
-          this.deadDate = new Date(this.deadDateView).setHours(0, 0, 0, 0)
-        }
-        actualizarDatos()
-      }
-
-      function actualizarDatos () {
-        console.log('actualizando datos')
-        this.dataBase.doc(personId).update({
-          name: this.name,
-          nickname: this.nickName,
-          row: this.row,
-          sex: this.sex,
-          bio: this.bio,
-          img: this.image,
-          conections: {
-            father: this.father,
-            mother: this.mother,
-            spouse: this.spouse
+              case 'storage/unauthorized': break
+                // User canceled the upload
+              case 'storage/canceled': break
+                // Unknown error occurred, inspect error.serverResponse
+              case 'storage/unknown': break
+            }
           },
-          dates: {
-            birth: this.birthDate,
-            dead: this.deadDate
-          }
-        })
-          .then(function (docRef) {
-            console.log('Se guardo Correctamente')
-            this.$router.go(-1)
+          () => {
+          // Upload completed successfully, now we can get the download URL
+            task.snapshot.ref.getDownloadURL().then(downloadURL => {
+              resolve(downloadURL)
+            })
           })
-          .catch(function (error) {
-            console.error('Error adding document: ', error)
-          })
-      }
-
-      function validacion () {
-        let feedBack = ''
-        if (!this.name) {
-          feedBack = 'El nombre es un campo obligatorio<br>'
-        }
-        if (!this.nickName) {
-          feedBack = feedBack + 'El apodo es un campo obligatorio<br>'
-        }
-        if (feedBack === '') {
-          feedBack = null
-        }
-        return feedBack
-      }
+      })
     },
-    deleteData () {
-      let routeId = this.$route.params.id
-      let dbPersonas = this.people
-      // confirm troug confirm dialog
-      var confirmation = confirm('Do you want to delete' + dbPersonas[routeId].name)
-      if (confirmation) {
-        this.dataBase.doc(routeId).delete()
-          .then(() => {
-            console.log('Document successfully deleted!')
-            this.$store.dispatch('getData')
-            this.$router.go(-1)
-          }).catch(error => {
-            console.error('Error removing document: ', error)
-          })
-      } else {
-        this.feedBack = 'You pressed Cancel!'
-      }
-    },
-    addData () {
+    async addData () {
       this.feedback = this.formValidation()
 
-      if (this.feedBack.length) return
+      if (this.feedback.length) return
 
       if (this.father.length) {
         this.row = this.people[this.father].row + 1
@@ -397,31 +287,59 @@ export default {
       if (this.mother.length) {
         this.row = this.people[this.mother].row + 1
       }
-      // send data
-      this.dataBase.add({
-        name: this.name,
-        nickname: this.nickName,
-        row: this.row,
-        sex: this.sex,
-        bio: this.bio,
-        img: this.image,
-        conections: {
-          father: this.father,
-          mother: this.mother,
-          spouse: this.spouse
-        },
-        dates: {
-          birth: dateFormat(new Date(this.birthDateObj.year, this.birthDateObj.month, this.birthDateObj.day), 'yyyy MM dd HH:mm:ss'),
-          dead: dateFormat(new Date(this.deadDateObj.year, this.deadDateObj.month, this.deadDateObj.day), 'yyyy MM dd HH:mm:ss')
+
+      if ('name' in this.imgBlob) {
+        try {
+          this.image = await this.uploadImage()
+        } catch (error) {
+          console.error('Error uploading image: ', error)
         }
-      })
-        .then(docRef => {
-          console.log('Document written with ID: ', docRef.id)
+      }
+      try {
+        const addDataResponse = await this.dataBase.add(this.getPersonObj())
+        if ('id' in addDataResponse) {
+          console.log('Document written with ID: ', addDataResponse.id)
+          this.$root.$emit('make-lines')
           this.$router.go(-1)
-        })
-        .catch(error => {
-          console.error('Error adding document: ', error)
-        })
+        }
+      } catch (error) {
+        console.error('Error adding document: ', error)
+      }
+    },
+    async updateData () {
+      const personId = this.$route.params.id
+
+      this.feedback = this.formValidation()
+
+      if (this.feedback.length) return
+
+      if (this.father.length && this.father !== this.people[personId].conections.father) {
+        this.row = this.people[this.father].row + 1
+      }
+      if (this.mother.length && this.mother !== this.people[personId].conections.mother) {
+        this.row = this.people[this.mother].row + 1
+      }
+
+      try {
+        await this.dataBase.doc(personId).update(this.getPersonObj())
+        this.$root.$emit('make-lines')
+        this.$router.go(-1)
+      } catch (error) {
+        console.error('Error updating document: ', error)
+      }
+    },
+    async deleteData () {
+      const personId = this.$route.params.id
+      // confirm by confirm dialog
+      var confirmation = confirm('Do you want to delete' + this.people[personId].name)
+      if (!confirmation) return
+      try {
+        await this.dataBase.doc(personId).delete()
+        this.$root.$emit('make-lines')
+        this.$router.go(-1)
+      } catch (error) {
+        console.error('Error removing document: ', error)
+      }
     },
     formValidation () {
       let feedBack = []
@@ -434,19 +352,48 @@ export default {
       if (this.sex.length < 1) {
         feedBack.push('Sex is required')
       }
-      if (this.father.length < 1 && this.mother.length < 1) {
-        feedBack.push('select one of the parents')
+      if (this.father.length < 1 && this.mother.length < 1 && this.spouse.length < 1) {
+        feedBack.push('select one of the parents or a spouse')
       }
       if (this.birthDateObj.day === null && this.birthDateObj.month === null && this.birthDateObj.year === null) {
         feedBack.push('select a correct birthday')
       }
       if (this.deadDateObj.isDead) {
-        if (this.deadDateObj.day === null && this.deadDateObj.month === null && this.deadDateObj.year === null) {
+        if (this.deadDateObj.day === null || this.deadDateObj.month === null || this.deadDateObj.year === null) {
           feedBack.push('select a correct dead date')
         }
       }
       return feedBack
-    } 
+    },
+    getPersonObj () {
+      const finalBirthDate = new Date(this.birthDateObj.year, this.birthDateObj.month, this.birthDateObj.day)
+      const finalBirthDateString = dateFormat(finalBirthDate, 'yyyy MM dd HH:mm:ss')
+
+      const finalDeadDate = this.deadDateObj.isDead
+        ? new Date(this.deadDateObj.year, this.deadDateObj.month, this.deadDateObj.day)
+        : ''
+      const finalDeadDateString = typeof finalDeadDate === 'object'
+        ? dateFormat(finalDeadDate, 'yyyy MM dd HH:mm:ss')
+        : ''
+      
+      return {
+        name: this.name,
+        nickname: this.nickName,
+        row: this.row,
+        sex: this.sex,
+        bio: this.bio,
+        img: this.image,
+        conections: {
+          father: this.father,
+          mother: this.mother,
+          spouse: this.spouse
+        },
+        dates: {
+          birth: finalBirthDateString,
+          dead: finalDeadDateString
+        }
+      }
+    }
   },
   computed: {
     people () {
@@ -530,4 +477,11 @@ export default {
     margin-right: 10px
     &:last-child
       margin-right: 0
+
+.feedback
+  margin-bottom: 10px
+  p
+    margin-bottom: 5px
+    color: $red
+    font-weight: $base-bold-font-weight
 </style>

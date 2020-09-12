@@ -47,7 +47,6 @@ export default new Vuex.Store({
             agregarTreeObject(treObject, usedObject[mother], key, `familia${nextFlyCount}`, true)
             // agrego key a usados
             usedObject[key] = usedObject[mother] + `.relatives.familia${nextFlyCount}`
-          
           // si encuentra father in usados
           } else if (objectP[key].conections.father in usedObject) {
             let father = objectP[key].conections.father
@@ -91,7 +90,7 @@ export default new Vuex.Store({
             // y le agrego a 'couple' el key
             obj[lastpath].relatives[familyId].couple.push(key)
             // ahora le sumo 1 a el caunter para el nombre de la familia
-            flyCount = flyCount + 1
+            flyCount++
           } else if (!relation) { // si relation es false(couple)
             // al path le agrego el key al 'couple' al que pertenece. la pareja ya debe estar en el objProvicional
             obj[lastpath].couple.push(key)

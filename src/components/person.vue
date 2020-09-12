@@ -34,7 +34,6 @@ export default {
   mounted () {
     this.$nextTick(function () {
       this.$root.$emit('person-rendered')
-      console.log('person ready')
     })
   },
   methods: {

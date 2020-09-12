@@ -79,9 +79,12 @@ export default {
   },
   methods: {
     personRendered () {
-      this.peopleCount++    
+      this.peopleCount++
+      console.log(this.peopleCount)
+      
       if (this.peopleCount === Object.keys(this.people).length) {
         this.makeLines()
+        this.peopleCount = 0
       }
     },
     makeLines () {
